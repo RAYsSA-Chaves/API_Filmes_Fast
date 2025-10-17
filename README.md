@@ -9,6 +9,13 @@ FastAPI é um framework (como Flask ou Django) para construir APIs com Python, c
 
 ------
 
+O que é o Swagger?
+O Swagger no FastAPI refere-se ao conjunto de ferramentas e à especificação OpenAPI que o FastAPI usa para gerar automaticamente documentação interativa de APIs. O FastAPI utiliza o Swagger UI para fornecer uma interface gráfica onde os desenvolvedores podem explorar, testar e interagir com a API diretamente do navegador, sem precisar escrever código HTML, CSS ou JavaScript para isso. 
+Swagger e OpenAPI são ferramentas poderosas para criar APIs com FastAPI . Elas permitem gerar automaticamente a documentação da API, testar APIs usando uma interface web e validar solicitações e respostas para garantir que sua API esteja funcionando conforme o esperado. 
+Acesso: caminho_da_sua_api/docs
+
+-----
+
 Framework:
 
 Em português, framework significa estrutra de trabalho ou estrutura de suporte. É basicamente um conjunto de ferramentas, códigos, funções, organização de pastas e arquivos e regras prontas que ajudam a desenvolver programas rapidamente e de forma organizada.
@@ -116,3 +123,30 @@ instalar as dependencias contidas no requirements:
 pip install -r requirements.txt
 
 Requirements.txt é um arquivo de texto simples em Python que lista as bibliotecas e suas versões específicas que um projeto precisa para funcionar. Ele é usado para garantir que todos os colaboradores usem as mesmas dependências, facilitando a reprodutibilidade do ambiente de desenvolvimento. 
+
+
+------
+
+Decoradores (@)
+Os decoradores do FastAPI servem para definir rotas de API (como @app.get('/items') ou @app.post('/items')), associando uma função a um método HTTP e a um caminho específico. Eles também são usados para adicionar funcionalidades extras de forma elegante, como autenticação, validação de dados
+
+Analogia do embrulho de presente:
+Imagine que você tem um presente lindamente embrulhado. O presente dentro é o principal, certo? Mas o papel de embrulho, a fita e o laço o tornam especial, dão um toque especial e podem até revelar algo sobre o que está dentro ou como abri-lo.
+
+Em Python, um decorador é como aquele embrulho de presente! É um tipo especial de função que literalmente "embrulha" outra função. Ao embrulhar essa função, ele pode:
+
+Adicione um novo comportamento à função original sem alterar o código da própria função .
+Modifique o funcionamento da função.
+Forneça instruções adicionais sobre como a função deve ser usada.
+Pense desta forma: você escreve uma função Python comum. Então, você adiciona um decorador a ela e pronto! Essa função original de repente ganha poderes ou instruções extras que não tinha antes.
+
+@algo.get É um "Decorador de Operação de Caminho": O appobjeto (nosso aplicativo FastAPI) tem métodos como .get(), .post(), .put(), .delete(), etc. Esses métodos, quando usados ​​como decoradores, são incrivelmente poderosos.
+Ele vincula um caminho de URL a uma função: o "/"interior @app.get("/")informa ao FastAPI: "Se alguém enviar uma solicitação HTTP GET para a URL raiz ( /), execute a função logo abaixo deste decorador ( read_rootneste caso)."
+Ele adiciona superpoderes da Web: este decorador faz muito trabalho para você nos bastidores:
+Ele informa ao aplicativo FastAPI para "escutar" solicitações naquele URL específico.
+Ele lida automaticamente com a conversão do dicionário Python {"message": "Hello, World!"}em JSON (o formato de dados padrão para APIs da web) antes de enviá-lo de volta como uma resposta HTTP.
+Ele sabe como gerar automaticamente aquela documentação interativa incrível (Swagger UI / ReDoc) para sua API!
+Ele gerencia o envio do código de status HTTP correto (como 200 OK) junto com sua resposta.
+
+Cada um deles adiciona comportamentos e instruções específicas relacionadas à web à função Python que eles decoram.
+

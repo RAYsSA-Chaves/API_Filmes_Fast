@@ -154,3 +154,5 @@ instalar as dependencias contidas no requirements:
 pip install -r requirements.txt
 
 Requirements.txt é um arquivo de texto simples em Python que lista as bibliotecas e suas versões específicas que um projeto precisa para funcionar. Ele é usado para garantir que todos os colaboradores usem as mesmas dependências, facilitando a reprodutibilidade do ambiente de desenvolvimento. 
+
+rodar o arquivo main.py: python main.py

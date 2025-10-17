@@ -1,0 +1,36 @@
+# Configurações do ruff - ferramenta para analisar e corrigir código python automaticamente baseado em boas práticas
+
+
+[tool.ruff]
+# Define onde procurar o código-fonte
+src = ['.']
+
+# Ignora a pasta da virtualenv e cache do python (não precisamos que ele formate isso)
+exclude = [
+    'env',
+    '__pycache__',
+    '.git'
+]
+
+extend-exclude = ['migrations']
+
+# Tamanho máximo de linha
+line-length = 79
+
+# Versão alvo do python
+target-version = 'py313'
+
+# Tipos de regras que o Ruff vai checar
+[tool.ruff.lint]
+preview = true # mostra o que está errado
+select = ['I', 'F', 'E', 'W', 'PL']
+
+# Alterações na formatação do código
+[tool.ruff.format]
+preview = true
+quote-style = 'single'
+
+
+# Comandos:
+# ruff check .
+# ruff format .

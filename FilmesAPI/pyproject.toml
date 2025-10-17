@@ -1,6 +1,5 @@
 # Configurações do ruff - ferramenta para analisar e corrigir código python automaticamente baseado em boas práticas
 
-
 [tool.ruff]
 # Define onde procurar o código-fonte
 src = ['.']
@@ -20,7 +19,7 @@ line-length = 79
 # Versão alvo do python
 target-version = 'py313'
 
-# Tipos de regras que o Ruff vai checar
+# Tipos de regras que o ruff vai checar
 [tool.ruff.lint]
 preview = true # mostra o que está errado
 select = ['I', 'F', 'E', 'W', 'PL']
@@ -34,3 +33,16 @@ quote-style = 'single'
 # Comandos:
 # ruff check .
 # ruff format .
+
+
+# Simplificando comandos
+[tool.taskipy.tasks]
+check = 'ruff check'
+format = 'ruff format'
+run = 'fastapi dev main.py'
+
+
+# Comandos:
+# task check
+# task format
+# task run

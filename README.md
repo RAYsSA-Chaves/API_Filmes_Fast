@@ -102,3 +102,17 @@ Post - criar novo item e cadastrar
 Get - puxar e exibir
 Put- atualizar dados
 delete - deletar algo
+
+Para rodar o projeto:
+acessar pasta principal do projeto (FilmesAPI)
+- criar env:
+python -m venv env
+ativar a env
+cd env
+cd Scripts
+.\activate
+sair da pasta da env e acessar a pasta principal novamente
+instalar as dependencias contidas no requirements:
+pip install -r requirements.txt
+
+Requirements.txt é um arquivo de texto simples em Python que lista as bibliotecas e suas versões específicas que um projeto precisa para funcionar. Ele é usado para garantir que todos os colaboradores usem as mesmas dependências, facilitando a reprodutibilidade do ambiente de desenvolvimento. 

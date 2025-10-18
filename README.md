@@ -169,8 +169,8 @@ CRUD - create, read, updated e delete
 Metodos HTTP que permitem realizar essas ações:
 Post - criar novo item e cadastrar
 Get - puxar e exibir
-Put- atualizar dados
-delete - deletar algo
+Put- atualizar um recurso existente
+delete - deletar um recurso
 
 
 ------
@@ -432,5 +432,13 @@ function App() {
   );
 }
 
+# Schemas 
+É como um contrato, uma documentação, um entendimento mútuo que deve ser estabelecido entre cliente e servidor sobre a estrutura dos dados que serão trocados. 
+No universo de APIs e contratos de dados, especialmente ao trabalhar com Python, o Pydantic se destaca como uma ferramenta poderosa. Além disso, é embutido no FastAPI. A ideia dele é criar uma camada de documentação e fazer a validação dos modelos de entrada e saída da nossa API.
+Ex: você define que ano deve ser do tipo INT, o Pydantic vai avaliar e não permitir algo como "mil novecentos e noventa e nove" (vai dar erro).
+    
+
+Conteúdo principal estudado:
+https://youtube.com/playlist?list=PLOQgLBuj2-3KT9ZWvPmaGFQ0KjIez0403&si=g-R6HG5Nsh4XUffi
 export default App;
 

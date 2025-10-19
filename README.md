@@ -522,5 +522,3 @@ project/
 
 Conteúdo principal estudado:
 https://youtube.com/playlist?list=PLOQgLBuj2-3KT9ZWvPmaGFQ0KjIez0403&si=g-R6HG5Nsh4XUffi
-export default App;
-

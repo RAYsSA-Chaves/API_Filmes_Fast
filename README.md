@@ -436,6 +436,13 @@ function App() {
 É como um contrato, uma documentação, um entendimento mútuo que deve ser estabelecido entre cliente e servidor sobre a estrutura dos dados que serão trocados. 
 No universo de APIs e contratos de dados, especialmente ao trabalhar com Python, o Pydantic se destaca como uma ferramenta poderosa. Além disso, é embutido no FastAPI. A ideia dele é criar uma camada de documentação e fazer a validação dos modelos de entrada e saída da nossa API.
 Ex: você define que ano deve ser do tipo INT, o Pydantic vai avaliar e não permitir algo como "mil novecentos e noventa e nove" (vai dar erro).
+
+# SQLalchemy
+Permite trabalhar com bancos SQL de forma mais natural a programadores python, em vez de escrever consultas SQL cruas, você pode usar métodos e atributos python para manipular seus registros de banco de dados.
+Instalacao: pip install SQLAlchemy
+
+# Alembic 
+O Alembic é uma ferramenta de migração de banco de dados usada em projetos Python, especialmente com o SQLAlchemy. Em resumo, ele controla e aplica alterações na estrutura do banco de dados (como criar, alterar ou excluir tabelas e colunas) sem precisar apagar tudo e recriar o banco do zero.
     
 
 Conteúdo principal estudado:

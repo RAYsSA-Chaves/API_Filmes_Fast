@@ -1,0 +1,52 @@
+# ------- Configurações do ruff -------
+#Ferramenta para analisar e corrigir código python automaticamente baseado em boas práticas
+
+[tool.ruff]
+# define onde procurar o código-fonte
+src = ['.']
+
+# ignora a pasta da virtualenv e cache do python (não precisamos que ele formate isso)
+exclude = [
+    'env',
+    '__pycache__',
+    '.git'
+]
+
+extend-exclude = ['migrations']
+
+# ignora regra de comprimento máximo de linha
+line-length = 120 
+ignore = ["E501"]
+
+# versão alvo do python
+target-version = 'py313'
+
+# tipos de regras que o ruff vai checar
+[tool.ruff.lint]
+preview = true # mostra o que está errado
+select = ['I', 'F', 'E', 'W', 'PL']
+
+# alterações na formatação do código
+[tool.ruff.format]
+preview = true
+quote-style = 'single'
+
+
+# ------- Comandos do ruff -------:
+# ruff check .
+# ruff check --fix
+# ruff format .
+
+
+# ------- Simplificando comandos com taskipy -------
+[tool.taskipy.tasks]
+check = 'ruff check'
+fix = 'ruff check --fix'
+format = 'ruff format'
+run = 'fastapi dev main.py'
+
+
+# ------- Comandos do taskipy -------:
+# task check
+# task format
+# task run

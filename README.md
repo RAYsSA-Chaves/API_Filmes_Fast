@@ -437,13 +437,88 @@ function App() {
 No universo de APIs e contratos de dados, especialmente ao trabalhar com Python, o Pydantic se destaca como uma ferramenta poderosa. Além disso, é embutido no FastAPI. A ideia dele é criar uma camada de documentação e fazer a validação dos modelos de entrada e saída da nossa API.
 Ex: você define que ano deve ser do tipo INT, o Pydantic vai avaliar e não permitir algo como "mil novecentos e noventa e nove" (vai dar erro).
 
+# Routes
+As rotas (ou endpoints) são os caminhos que a API disponibiliza para o cliente. Cada rota representa uma funcionalidade — como listar filmes, criar um gênero, deletar um usuário, etc.
+Quando o projeto cresce, você separa as rotas em arquivos específicos (para não deixar o main.py gigante). É basicamente um conjunto de rotas agrupadas por tema.
+Ex:
+app/
+├── main.py
+├── routers/
+│   ├── users.py
+│   └── cursos.py
+
+
 # SQLalchemy
 Permite trabalhar com bancos SQL de forma mais natural a programadores python, em vez de escrever consultas SQL cruas, você pode usar métodos e atributos python para manipular seus registros de banco de dados.
 Instalacao: pip install SQLAlchemy
 
-# Alembic 
-O Alembic é uma ferramenta de migração de banco de dados usada em projetos Python, especialmente com o SQLAlchemy. Em resumo, ele controla e aplica alterações na estrutura do banco de dados (como criar, alterar ou excluir tabelas e colunas) sem precisar apagar tudo e recriar o banco do zero.
-    
+Componentes importantes:
+- Engine: é a conexão com o banco de dados. Ela é instanciada através da função create_engine(), que recebe as credenciais do banco de dados, o endereço de conexão entre outros
+- Session: ela é encarregada de todas as transações entre o aplicativo python e o banco, fornecendo uma API para conduzi-las. Ela depende da engine (que conecta com o banco de dados) e interage com os modelos criados para criar tabelas no banco de dados
+- Metadados: são todos os dados que os modelos contém para que as tabelas sejam criadas; ex: uma tabela Users vai ter id do tipo inteiro, username do tipo string, etc.
+
+
+# XAMPP
+XAMPP serve para criar um servidor local no seu computador. Ele é basicamente um kit que já vem com tudo pronto para você rodar aplicações web que usam PHP e banco de dados.
+
+Componentes principais do XAMPP:
+| Componente          | Função                                                                       |
+| ------------------- | ---------------------------------------------------------------------------- |
+| **Apache**          | Servidor web — ele recebe requisições HTTP do navegador e serve páginas web. |
+| **MySQL / MariaDB** | Banco de dados — armazena dados da sua aplicação.                            |
+| **PHP**             | Linguagem de programação para processar lógica do servidor.                  |
+| **phpMyAdmin**      | Interface web para gerenciar bancos de dados MySQL/MariaDB.                  |
+
+Como funciona um banco de dados com o XAMPP
+Quando você instala o XAMPP:
+Apache roda como servidor web local (localhost) na porta 80 (ou 8080 se a 80 estiver ocupada).
+MySQL ou MariaDB roda como servidor de banco de dados na porta 3306.
+Você cria bancos de dados, tabelas e insere dados no MySQL (usando phpMyAdmin ou linhas de comando).
+Sua aplicação (PHP, Python, Node.js etc.) se conecta ao banco usando host localhost, usuário e senha configurados no XAMPP.
+
+O que é o Apache
+Apache HTTP Server é o servidor web mais usado no mundo.
+Ele recebe requisições do navegador (ex: você digita localhost/index.html)
+Processa a requisição e envia a página de volta
+Pode rodar páginas estáticas (HTML, CSS, JS) ou dinâmicas (PHP, Python via integração)
+No XAMPP, o Apache é o responsável por “servir” seus arquivos de site ou aplicação web. Sem ele, você teria apenas o banco, mas não conseguiria rodar a aplicação local.
+Appache serve as páginas web que forem criadas via SSR e também a página web administrativa do seu banco (phpMyAdmin), portnato, é necessário startá-lo para acessar.
+
+Como tudo funciona junto
+Você abre o XAMPP.
+Inicia Apache (servidor web) e MySQL (banco).
+Sua aplicação (ou navegador) acessa o Apache (localhost)
+A aplicação se conecta ao MySQL/MariaDB para salvar, buscar ou manipular dados.
+💡 Exemplo prático:
+PHP ou Python se conecta ao MySQL do XAMPP via localhost:3306
+Apache serve a página e o conteúdo retornado pelo banco de dados
+phpMyAdmin é apenas um “painel visual” para você ver e editar o banco manualmente
+
+
+# Versionamento de API
+/api/v1/filmes -> isso indica que é uma API (não uma rota de página web normal) e o v1 indica a versão da API.
+Por que isso é importante?
+Se você mudar a estrutura da API no futuro (ex: campos dos JSONs, endpoints), quem ainda usa a versão antiga (v1) não vai quebrar.
+Você pode lançar v2 (/api/v2) com alterações, sem prejudicar quem usa v1.
+Fica claro para qualquer desenvolvedor qual é a versão que está sendo usada.
+Facilita documentação e manutenção.
+Você consegue manter mais de uma versão rodando ao mesmo tempo.
+O versionamento não é só o prefixo, mas também a estrutura de pastas e routers. Isso deixa seu projeto limpo, organizado e preparado para crescimento, além de proteger clientes que dependem de versões antigas.
+project/
+│
+├─ api/
+│   ├─ v1/
+│   │   ├─ routes/
+│   │   │   ├─ users.py
+│   │   └─ __init__.py
+│   └─ v2/
+│       ├─ routes/
+│       │   ├─ users.py
+│       └─ __init__.py
+
+
+
+----
 
 Conteúdo principal estudado:
 https://youtube.com/playlist?list=PLOQgLBuj2-3KT9ZWvPmaGFQ0KjIez0403&si=g-R6HG5Nsh4XUffi

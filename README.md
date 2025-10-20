@@ -516,6 +516,109 @@ project/
 │       │   ├─ users.py
 │       └─ __init__.py
 
+A pasta core de um projeto:
+A pasta core/ geralmente serve para centralizar a parte “coração” do sistema — as configurações e componentes internos que são usados por todo o projeto.
+Ela não tem a ver com a “lógica de negócio”, e sim com infraestrutura e base da aplicação.
+Por exemplo, nela pode conter:
+core/
+├── config.py        # Configurações gerais da aplicação
+├── database.py      # Conexão com o banco e criação do engine/session
+├── deps.py          # Dependências usadas nas rotas (ex: obter sessão do banco)
+├── security.py      # Autenticação, JWT, senhas etc. (se o projeto tiver login)
+core/ é o núcleo técnico do projeto —
+tudo que é essencial pro sistema funcionar, mas não faz parte da regra de negócio (como filmes, gêneros, alunos, etc).
+
+# Projeto Síncrono vs Assíncrono
+| Tipo           | Comportamento                                                                                | Quando usar                                  |
+| -------------- | -------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| **Síncrono**   | Cada requisição **espera a operação terminar** antes de continuar.                           | Projetos simples ou scripts; menos complexo. |
+| **Assíncrono** | Permite que a aplicação **continue processando outras requisições** enquanto espera o banco. | APIs modernas, FastAPI, alta concorrência.   |
+
+Exemplo síncrono:
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, Session
+
+# Engine síncrona
+engine = create_engine("mysql+pymysql://root@localhost/btc", echo=True)
+
+# Fábrica de sessões
+SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=True)
+
+# Criando uma sessão
+db: Session = SessionLocal()
+result = db.query(Filme).all()
+db.close()
+Sessão bloqueia até o banco responder.
+
+Assíncrono:
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+
+engine = create_async_engine("mysql+asyncmy://root@localhost/btc", echo=True)
+SessionLocal = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
+
+async def get_filmes():
+    async with SessionLocal() as session:
+        result = await session.execute(select(Filme))
+        filmes = result.scalars().all()
+        return filmes
+Requisições não bloqueiam enquanto espera o banco.
+Escala muito melhor em APIs com FastAPI que recebem múltiplas requisições simultâneas.
+
+A ideia do async
+async é como dizer para a função:
+"Ei, essa função pode parar e deixar outra coisa rodar enquanto espera alguma coisa terminar."
+Imagine que a função precisa buscar dados do banco. Sem async, ela fica parada esperando o banco responder, e nada mais acontece até terminar.
+Com async, a função pode “pausar” enquanto espera o banco e deixar o servidor atender outras requisições.
+
+O que o await faz
+await é usado dentro de uma função async.
+Ele diz:
+"Aqui, vou esperar o resultado de uma operação que leva tempo (ex: banco, HTTP), mas enquanto isso, outra coisa pode rodar."
+Sem await, você não espera o resultado da operação, e ela pode não funcionar como esperado.
+
+Analogia com o mundo real
+Imagine que você está fazendo café:
+Síncrono: você coloca a água para ferver e fica parado esperando. Ninguém mais pode usar a cozinha enquanto isso.
+Assíncrono (async/await): você coloca a água para ferver, mas enquanto isso você pode preparar o pão, lavar a louça, ou atender alguém. Quando a água ferve, você volta para a chaleira.
+O café (resultado) só estará pronto quando você “await” a água ferver, mas enquanto isso o servidor não fica parado.
+
+# Return X Yield
+O que é um gerador (yield)
+Um gerador é uma função que produz valores “um de cada vez” e pausa o seu estado entre eles, em vez de calcular tudo de uma vez e devolver uma lista inteira.
+Em vez de return, usamos yield.
+Quando você chama a função, ela não executa tudo de uma vez. Ela só produz o próximo valor quando pedimos.
+yield significa literalmente:
+“entregue este valor agora, mas lembre onde parei para continuar depois.”
+Ou seja, ela pausa a função, devolve um valor, e permite continuar de onde parou na próxima chamada.
+🔹 2️⃣ Exemplo simples
+def contador():
+    yield 1
+    yield 2
+    yield 3
+
+gen = contador()  # Não executou nada ainda
+
+print(next(gen))  # 1 → executa até o primeiro yield
+print(next(gen))  # 2 → continua de onde parou
+print(next(gen))  # 3 → continua de novo
+A função “pausa” no yield e retoma quando chamamos next().
+
+Diferente do return, que termina a função e devolve tudo de uma vez
+
+Usando return:
+def contador():
+    return 1
+    return 2
+    return 3
+
+res = contador()  
+print(res)
+
+Resultado: 1
+
+A função executa até o primeiro return.
+Assim que encontra o return, a função termina.
+Valores seguintes (2 e 3) nunca são retornados.
 
 
 ----

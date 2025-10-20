@@ -2,6 +2,7 @@
 
 from datetime import datetime
 
+from sqlalchemy import DateTime, String, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from . import table_registry
@@ -12,5 +13,5 @@ class GeneroModel:
     __tablename__ = 'generos'
 
     id: Mapped[int] = mapped_column(primary_key=True, init=False)
-    genero: Mapped[str]
-    created_at: Mapped[datetime]
+    genero: Mapped[str] = mapped_column(String(20))
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'), init=False)

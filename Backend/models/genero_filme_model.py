@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import DateTime, ForeignKey, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from . import table_registry
@@ -14,4 +14,4 @@ class GeneroFilmeModel:
 
     id_filme: Mapped[int] = mapped_column(ForeignKey('filmes.id'), primary_key=True)
     id_genero: Mapped[int] = mapped_column(ForeignKey('generos.id'), primary_key=True)
-    created_at: Mapped[datetime]
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'), init=False)

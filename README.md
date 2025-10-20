@@ -1,7 +1,8 @@
 # API de Filmes com FastAPI 
-Aprendendo FastAPI.
 
-O que é FastAPI?
+Bem-vindos(as) aos meus aprendizados de FastAPI.
+
+# O que é FastAPI?
 
 FastAPI é um framework (como Flask ou Django) para construir APIs com Python, criado para ser rápido, simples e eficiente.
 
@@ -9,14 +10,14 @@ FastAPI é um framework (como Flask ou Django) para construir APIs com Python, c
 
 ------
 
-O que é o Swagger?
+# O que é o Swagger?
 O Swagger no FastAPI refere-se ao conjunto de ferramentas e à especificação OpenAPI que o FastAPI usa para gerar automaticamente documentação interativa de APIs. O FastAPI utiliza o Swagger UI para fornecer uma interface gráfica onde os desenvolvedores podem explorar, testar e interagir com a API diretamente do navegador, sem precisar escrever código HTML, CSS ou JavaScript para isso. 
 Swagger e OpenAPI são ferramentas poderosas para criar APIs com FastAPI . Elas permitem gerar automaticamente a documentação da API, testar APIs usando uma interface web e validar solicitações e respostas para garantir que sua API esteja funcionando conforme o esperado. 
 Acesso: caminho_da_sua_api/docs
 
 -----
 
-Framework:
+# Framework:
 
 Em português, framework significa estrutra de trabalho ou estrutura de suporte. É basicamente um conjunto de ferramentas, códigos, funções, organização de pastas e arquivos e regras prontas que ajudam a desenvolver programas rapidamente e de forma organizada.
 
@@ -24,7 +25,7 @@ Um framework oferece a base (esqueleto) para o seu projeto e você só precisa p
 
 -----
 
-API:
+# API:
 
 Application Programming Interface ou Interface de Programação de Aplicativos é uma forma de dois sistemas diferentes trocarem informações entre si, geralmente em formato JSON.
 
@@ -50,14 +51,14 @@ A API do Google Maps permite que outros aplicativos exibam mapas e rotas, sem pr
 
 Um streaming de filmes não necessariamente precisaria criar um banco e armazenar todas as infos de cada filme, como capa, sinopse, atores, etc, ele poderia consumir de uma API de filmes que já existe, que realizam requisições para um servidor de filmes que já existe.
 
+------
 
-API REST e RESTFUL (estilos) de API:
+# API REST e RESTFUL (estilos) de API:
 Rest (Respresentational State Transfer) é um padrão de boas práticas para APIs
 - usa metodos HTTP (GET, POST, PULL, DELETE)
 - os dados geralmente são enviados em formato json
 - usa URLs para identificar recursos (/fimes, /usuarios)
 - é stateless (o servidor não guarda informações da sessão do cliente e a API nem mesmo armazena o seu próprio estado)
-
 
 Restful 
 É uma API que segue corretamente os princípios REST, ou seja, toda API Restful é Rest.
@@ -81,14 +82,13 @@ Ex:
 
 A própria resposta ensina como continuar navegando, basta seguir os links sem precisar conhecer as rotas antes.
 
-
 Exemplo de API nao Restful:
 POST /api/getUsuarios
 
 Aqui a ação está no nome da rota e não no método HTTP e isso viola o padrão Rest 
 
 
-URL e URI:
+# URL e URI:
 URI - Uniform resource identifier - é um identificador genérico de recursos (qualquer coisa acessível na rede), ela serve para identificar um recurso, mas nao indica necessariamente como acessá-lo, onde está localizado
 Ex: /usuarios/1
 
@@ -157,7 +157,7 @@ O cliente quer produtos
 Onde a categoria é livros
 E o preço máximo é 50
 
-#fragmento = Parte usada somente pelo navegador, não vai para o servidor. Serve para indicar uma seção específica dentro da página, como uma âncora interna na página (ex: ir direto para um trecho do texto).
+fragmento = Parte usada somente pelo navegador, não vai para o servidor. Serve para indicar uma seção específica dentro da página, como uma âncora interna na página (ex: ir direto para um trecho do texto).
 ex: https://meusite.com/artigo#comentarios
 ➡ O navegador vai abrir a página artigo, e rolar automaticamente até o elemento com o identificador id="comentarios" no HTML.
 
@@ -172,10 +172,9 @@ Get - puxar e exibir
 Put- atualizar um recurso existente
 delete - deletar um recurso
 
-
 ------
 
-Decoradores (@)
+# Decoradores (@)
 Os decoradores do FastAPI servem para definir rotas de API (como @app.get('/items') ou @app.post('/items')), associando uma função a um método HTTP e a um caminho específico. Eles também são usados para adicionar funcionalidades extras de forma elegante, como autenticação, validação de dados
 
 Analogia do embrulho de presente:
@@ -227,6 +226,7 @@ A função retorna um JSON como resposta:
   "mensagem": "Parâmetros recebidos com sucesso!"
 }
 
+-----
 
 Passos para criar o projeto com fastapi:
 Criação de env: python -m venv env
@@ -264,7 +264,7 @@ fastapi dev main.py --host 0.0.0.0
 Acessando: descubra o ip do dispositivo que está servindo a API (ipconfig no windows)
 Acesse o endereço na porta 8000 em qualquer disposivo conectado na rede, ex: 192.168.1.3:8000
 
-
+----
 
 # Acesso ao Backend via FrontEnd
 Quando você acessa pelo frontend (um site, por exemplo), o servidor web ou o JavaScript do navegador pega esses dados da API e monta o HTML da página dinamicamente.
@@ -528,6 +528,8 @@ core/
 core/ é o núcleo técnico do projeto —
 tudo que é essencial pro sistema funcionar, mas não faz parte da regra de negócio (como filmes, gêneros, alunos, etc).
 
+-----
+
 # Projeto Síncrono vs Assíncrono
 | Tipo           | Comportamento                                                                                | Quando usar                                  |
 | -------------- | -------------------------------------------------------------------------------------------- | -------------------------------------------- |
@@ -619,6 +621,167 @@ Resultado: 1
 A função executa até o primeiro return.
 Assim que encontra o return, a função termina.
 Valores seguintes (2 e 3) nunca são retornados.
+
+----
+
+# O que merece ter uma API
+Cada endpoint deve representar um **recurso**, e não uma tabela.
+Por exemplo:
+/filmes → representa o recurso “filmes”
+/generos → representa o recurso “gêneros”
+/filmes/{id} → representa um filme específico
+
+O papel da API é organizar os dados antes de enviar ao frontend. Ou seja, é a API que deve juntar as informações necessárias — o frontend não precisa (nem deve) chamar três endpoints diferentes e depois juntar tudo.
+
+Exemplo prático:
+Você tem essas tabelas:
+filmes (id, titulo, ano, ...)
+generos (id, nome)
+filmes_generos (id_filme, id_genero)
+
+O frontend quer exibir uma lista de filmes com seus gêneros.
+Você pode criar um endpoint como:
+
+@app.get("/filmes")
+def listar_filmes(db: Session = Depends(get_db)):
+    filmes = db.query(Filme).all()
+    resultado = []
+    for filme in filmes:
+        resultado.append({
+            "id": filme.id,
+            "titulo": filme.titulo,
+            "ano": filme.ano,
+            "generos": [g.nome for g in filme.generos]  # relacionamento
+        })
+    return resultado
+
+Assim, o frontend faz uma única requisição (GET /filmes) e já recebe algo como:
+[
+  {
+    "id": 1,
+    "titulo": "Matrix",
+    "ano": 1999,
+    "generos": ["Ação", "Ficção Científica"]
+  }
+]
+
+Quando criar endpoints separados?
+Crie endpoints separados quando o frontend precisar desses dados isoladamente, por exemplo:
+/generos → para listar todos os gêneros em um dropdown
+/filmes/{id} → para detalhes de um único filme
+/filmes → para listar com ou sem filtros
+/filmes_generos ❌ - não é papel do frontend combinar respostas para conseguir exibir os filmes + seus generos — isso é trabalho da API.
+
+Se a tabela intermediária não tem dados próprios, apenas liga filme_id ↔ genero_id, então:
+não é necessário criar um endpoint específico pra ela.
+Você gerencia essa relação pelos endpoints dos próprios filmes ou gêneros.
+
+Exemplo:
+Para adicionar gêneros a um filme, você pode ter um PUT /filmes/{id} que recebe uma lista de ids de gêneros:
+
+{
+  "titulo": "Matrix",
+  "ano": 1999,
+  "generos": [1, 3]  // IDs de gêneros
+}
+
+
+E no backend:
+filme.generos = db.query(Genero).filter(Genero.id.in_(dados.generos)).all()
+db.commit()
+
+Assim, o FastAPI atualiza automaticamente a tabela intermediária (filmes_generos) nos bastidores, sem precisar criar endpoint específico pra ela.
+
+Agora, se a tabela intermediária tiver mais informações, além os ids das outras tabelas, aí sim faz sentido ter um endpoint próprio, algo como:
+POST /filmes-generos → para criar uma associação
+DELETE /filmes-generos → para remover uma associação específica
+Ex:
+filmes_generos (
+    filme_id INT,
+    genero_id INT,
+    data_associacao DATE,
+    observacao TEXT
+)
+Nesse caso, você está tratando a tabela intermediária como um recurso independente, porque ela contém dados com significado próprio.
+
+Resumo:
+| Caso                                    | Precisa de endpoint pra tabela intermediária? | Por quê                                                     |
+| --------------------------------------- | --------------------------------------------- | ----------------------------------------------------------- |
+| Só guarda os IDs (relação pura)         | ❌ Não                                         | A API pode gerenciar via endpoints de `filmes` ou `generos` |
+| Tem colunas próprias (dados adicionais) | ✅ Sim                                         | Ela vira um “recurso” da API, que precisa de CRUD próprio   |
+
+No caso da tabela gêneros: Mesmo que um gênero só seja usado em filmes, ele ainda é um objeto independente no banco.
+Os filmes e gêneros se relacionam por meio da tabela intermediária (filmes_generos), mas:
+O filme pode incluir gêneros (via lista de IDs de gêneros no corpo da requisição);
+O gênero pode existir sozinho (sem precisar de um filme).
+
+# Conexão do Front com API com axios
+Cada tipo de ação (GET, POST, PUT, DELETE) precisa de uma requisição Axios separada para o endpoint correspondente da API. Mas isso não significa um caos de código.
+
+# Como funciona o Axios
+O Axios é só uma biblioteca que faz requisições HTTP.
+Cada método HTTP tem sua função:
+axios.get() → busca dados
+axios.post() → cria algo novo
+axios.put() ou axios.patch() → edita algo
+axios.delete() → exclui algo
+
+// Buscar lista de filmes
+axios.get("http://localhost:8000/filmes")
+
+// Criar novo filme
+axios.post("http://localhost:8000/filmes", novoFilme)
+
+// Deletar filme
+axios.delete(`http://localhost:8000/filmes/${id}`)
+
+// Atualizar filme
+axios.put(`http://localhost:8000/filmes/${id}`, dadosAtualizados)
+
+Exemplo prático:
+// GET: buscar todos os filmes
+function carregarFilmes() {
+  axios.get("http://localhost:8000/filmes")
+    .then(res => console.log(res.data))
+}
+
+// POST: criar filme
+function adicionarFilme() {
+  axios.post("http://localhost:8000/filmes", {
+    titulo: "Matrix",
+    ano: 1999
+  })
+  .then(res => console.log(res.data))
+}
+
+// DELETE: remover filme
+function deletarFilme(id) {
+  axios.delete(`http://localhost:8000/filmes/${id}`)
+  .then(res => console.log(res.data))
+}
+
+Organização recomendada
+Pra não ficar bagunçado, normalmente se cria um arquivo de serviços no frontend, tipo:
+📁 src/services/filmeService.js
+
+import axios from "axios";
+
+const API_URL = "http://localhost:8000/filmes";
+
+export function getFilmes() {
+  return axios.get(API_URL);
+}
+
+export function addFilme(filme) {
+  return axios.post(API_URL, filme);
+}
+
+export function deleteFilme(id) {
+  return axios.delete(`${API_URL}/${id}`);
+}
+
+Depois no FrontEnd você importa essas funções e utiliza nos eventos dos elementos
+
 
 
 ----

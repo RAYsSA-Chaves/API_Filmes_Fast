@@ -783,6 +783,12 @@ export function deleteFilme(id) {
 Depois no FrontEnd você importa essas funções e utiliza nos eventos dos elementos
 
 
+# Models
+Models são modelos, representações das tabelas do banco de dados. Eles definem a estrutura (colunas, tipos, relacionamentos). são usados para consultar, criar, deletar e atualizar registros no banco quando usamos SQLAlchemy, ou seja, não escrevemos SQL puro, mas manipulados os registros através do Python.
+Geralmente voce: define o modelo, define o schema, define uma rota que recebe um schema, converte para model, salva no banco e retorna um outro schema.
+Os schemas sozinhos não criam nem interagem com o banco de dados. Sem Models, o FastAPI não sabe em qual tabela salvar os dados, como mapear o objeto para SQL, nem como ler os dados do banco.
+
+Quando você trabalha direto com o banco, via SQL cru, não há necessidade de Models. Você vai trabalhar apenas com queries SQL (SELECT * FROM usuarios, INSERT INTO usuarios...) e usar apenas schemas pydantic para validar o que entra e sai da sua API.
 
 ----
 

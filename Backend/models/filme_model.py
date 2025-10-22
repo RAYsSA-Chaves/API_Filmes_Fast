@@ -3,9 +3,10 @@
 from datetime import datetime
 
 from sqlalchemy import DateTime, String, text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from . import table_registry
+from models.genero_model import GeneroModel
 
 # Mapped -> mapeia o tipo mais próximo do banco (ex: str aqui = varchar lá)
 # mapped_column -> entende automaticamente o contexto da classe e faz algumas configurações de mapeamento para dizer a coluna deve ser do tipo anotado em Mapped[...]
@@ -23,7 +24,10 @@ class MovieModel:
     ano: Mapped[int]
     capa: Mapped[str] = mapped_column(String(255), unique=True)
     avaliacao_interna: Mapped[float]
-    # Cria automaticamente a data e hora no momento do INSERT
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=text('CURRENT_TIMESTAMP'), init=False
-    )  # o banco guarda data de cadastro dinamicamente, não é o usuário nem o python que preenche
+    )  # o banco guarda data do INSERT automaticamente, não é o usuário nem o python que preenche isso
+    generos: Mapped[list["GeneroModel"]] = relationship (
+        secondary="genero_filme",  # nome da tabela intermediária
+        back_populates="filme" # liga ao atributo específico da tabela
+    )

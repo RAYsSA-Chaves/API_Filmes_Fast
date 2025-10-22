@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 # para post de gênero
 class GeneroSchema(BaseModel):
+    id: int
     genero: str
 
 

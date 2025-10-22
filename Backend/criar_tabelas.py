@@ -3,6 +3,9 @@
 import asyncio
 
 from core.database import engine
+from models import filme_model
+from models import genero_model
+from models import genero_filme_model
 from models import table_registry
 
 

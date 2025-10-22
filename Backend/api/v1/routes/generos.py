@@ -24,9 +24,11 @@ def read_generos():
 
 # Alterar um gênero
 @router.put('/{genero_id}', status_code=HTTPStatus.OK, response_model=GeneroSchema)
-def update_genero(genero_id: int, genero: GeneroSchema): ...
+def update_genero(genero_id: int, genero: GeneroSchema): 
+    ...
 
 
 # Deletar um gênero
 @router.delete('/{genero_id}', status_code=HTTPStatus.OK, response_model=MessageSchema)
-def delete_filme(genero_id: int): ...
+def delete_filme(genero_id: int): 
+    ...

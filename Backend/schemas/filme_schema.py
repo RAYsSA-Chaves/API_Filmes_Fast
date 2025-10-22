@@ -1,8 +1,11 @@
 # Documentação dos modelos dos dados dos filmes para validação
 
-from typing import Annotated  # permite anexar informações extras a um tipo
+from typing import Annotated, List
+# Annotated = permite anexar informações extras a um tipo
 
 from pydantic import AnyUrl, BaseModel, Field, StringConstraints
+
+from .genero_schema import GeneroSchema
 
 # ---- Tipos personalizados ----
 
@@ -28,6 +31,7 @@ class MovieSchema(BaseModel):
     ano: int
     capa: AnyUrl
     avaliacao_interna: NotaMax
+    generos: List[int]  # lista de IDs dos gêneros
 
 
 # retirando infos sigilosas da resposta das requisições
@@ -37,11 +41,12 @@ class MoviePublic(BaseModel):
     duracao: TempoStr
     ano: int
     capa: AnyUrl
+    generos: List[GeneroSchema]
 
 
 # para salvar no fake db
-class MovieDB(MovieSchema):
-    id: int
+# class MovieDB(MovieSchema):
+#     id: int
 
 
 # para get de todos os filmes

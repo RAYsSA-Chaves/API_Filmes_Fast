@@ -4,3 +4,7 @@
 from sqlalchemy.orm import registry
 
 table_registry = registry()
+
+from .movie_model import MovieModel
+from .genero_model import GeneroModel
+from .genero_filme_model import FilmeGeneroModel

@@ -1,8 +1,8 @@
 # Documentação dos modelos dos dados dos filmes para validação
 
 from typing import Annotated, List
-# Annotated = permite anexar informações extras a um tipo
 
+# Annotated = permite anexar informações extras a um tipo
 from pydantic import AnyUrl, BaseModel, Field, StringConstraints
 
 from .genero_schema import GeneroSchema

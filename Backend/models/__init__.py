@@ -5,7 +5,7 @@ from sqlalchemy.orm import registry
 
 table_registry = registry()
 
-# importando os models para o python executar o decorator desses arquivos e registrar as tabelas no metadata 
-from .movie_model import MovieModel
-from .genero_model import GeneroModel
-from .genero_filme_model import GeneroFilmeModel
+# importando os models para o python executar o decorator desses arquivos e registrar as tabelas no metadata
+from .filme_model import MovieModel as MovieModel
+from .genero_filme_model import GeneroFilmeModel as GeneroFilmeModel
+from .genero_model import GeneroModel as GeneroModel

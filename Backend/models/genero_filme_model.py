@@ -1,8 +1,7 @@
 # Modelo para tabela de associação de gêneros e filmes no banco de dados
 
-from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, text
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
 from . import table_registry

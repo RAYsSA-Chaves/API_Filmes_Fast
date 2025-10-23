@@ -530,6 +530,53 @@ tudo que é essencial pro sistema funcionar, mas não faz parte da regra de neg�
 
 -----
 
+# Engine e sessões
+A engine é o motor de conexão com o banco de dados.
+Ela não executa queries diretamente, mas é a base de tudo — é quem:
+sabe qual banco usar (MySQL, PostgreSQL, SQLite...),
+sabe como se conectar (usuário, senha, host, porta),
+e cria conexões reais com o banco quando necessário.
+A engine é como o roteador de internet da sua casa.
+Ele não acessa sites, mas faz a ponte entre você e a internet.
+
+A sessão é a porta de acesso ativa entre o seu código e o banco.
+É por meio dela que você executa as operações:
+add() → adiciona objetos para inserção
+delete() → remove registros
+query() e select() → faz consultas; query é um método mais antigo e select é mais moderno
+commit() → salva mudanças
+rollback() → desfaz alterações em caso de erro
+refresh(objeto) -> Recarrega os dados do objeto direto do banco. Isso é útil quando o banco gera valores automaticamente (como IDs, timestamps etc).
+flush() -> Envia as alterações pendentes para o banco sem fazer commit, sem salvar de fato, ex:
+db.add(filme)
+await db.flush()  # gera o ID, mas ainda não salva definitivamente
+print(filme.id)  # já disponível
+await db.commit()
+
+expire(objeto) -> Marca um objeto para ser recarregado da próxima vez que for acessado.
+ex:
+db.expire(filme) # Agora, ao acessar filme.titulo, ele busca do banco novamente
+
+close() -> Fecha a sessão (ou a conexão com o banco).
+
+
+Se a engine é o roteador,
+a sessão é o seu navegador aberto fazendo as requisições.
+Cada aba (sessão) pode:
+abrir páginas (queries),
+enviar formulários (inserts),
+ou fechar e abrir novas conexões.
+
+| Conceito         | O que é                  | Serve para                                                  | Analogia                      |
+| ---------------- | ------------------------ | ----------------------------------------------------------- | ----------------------------- |
+| **Engine**       | Conexão base com o banco | Gerar conexões e gerenciar a comunicação                    | Roteador de internet          |
+| **Session**      | Interface ativa de uso   | Executar operações (inserir, deletar, consultar, atualizar) | Navegador ou aba da internet  |
+| **SessionMaker** | Fábrica de sessões       | Criar várias sessões quando precisar                        | Pessoa que abre novas abas    |
+| **AsyncSession** | Sessão assíncrona        | Permite usar `await` (FastAPI)                              | Navegador moderno multitarefa |
+
+
+-----
+
 # Projeto Síncrono vs Assíncrono
 | Tipo           | Comportamento                                                                                | Quando usar                                  |
 | -------------- | -------------------------------------------------------------------------------------------- | -------------------------------------------- |
@@ -791,6 +838,28 @@ Os schemas sozinhos não criam nem interagem com o banco de dados. Sem Models, o
 Quando você trabalha direto com o banco, via SQL cru, não há necessidade de Models. Você vai trabalhar apenas com queries SQL (SELECT * FROM usuarios, INSERT INTO usuarios...) e usar apenas schemas pydantic para validar o que entra e sai da sua API.
 
 ----
+
+# Dependências
+Em FastAPI, uma dependência é um recurso que você injeta automaticamente em rotas ou funções.
+Isso evita repetição e garante que algo essencial (como a sessão do banco, autenticação, etc.) seja criado e encerrado corretamente.
+
+É como dizer:
+“Sempre que alguém chamar essa rota, me dê também uma sessão de banco pronta pra usar — e feche quando acabar.” Sem uma sessão, você não consegue executar queries, inserts, updates, etc.
+
+Se você não usasse dependência, teria que fazer tudo manualmente em toda rota:
+@router.post('/')
+async def create_movie(filme: MovieSchema):
+    session = Session()
+    try:
+        novo_filme = MovieModel(**filme.dict())
+        session.add(novo_filme)
+        await session.commit()
+        return novo_filme
+    finally:
+        await session.close()
+
+
+------
 
 Conteúdo principal estudado:
 https://youtube.com/playlist?list=PLOQgLBuj2-3KT9ZWvPmaGFQ0KjIez0403&si=g-R6HG5Nsh4XUffi

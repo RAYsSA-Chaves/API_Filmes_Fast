@@ -548,10 +548,11 @@ commit() → salva mudanças
 rollback() → desfaz alterações em caso de erro
 refresh(objeto) -> Recarrega os dados do objeto direto do banco. Isso é útil quando o banco gera valores automaticamente (como IDs, timestamps etc).
 flush() -> Envia as alterações pendentes para o banco sem fazer commit, sem salvar de fato, ex:
-db.add(filme)
+db.add()
 await db.flush()  # gera o ID, mas ainda não salva definitivamente
 print(filme.id)  # já disponível
 await db.commit()
+scalars() -> Extrai só o conteúdo principal de cada linha, ou seja, retorna só os objetos. 
 
 expire(objeto) -> Marca um objeto para ser recarregado da próxima vez que for acessado.
 ex:

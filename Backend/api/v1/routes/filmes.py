@@ -40,28 +40,12 @@ async def create_movie(filme: MovieSchema, db: AsyncSession = Depends(get_sessio
     for genero_id in filme.generos:
         genero = await db.get(GeneroModel, genero_id)
         if not genero:
-            raise HTTPException(
-                status_code=HTTPStatus.NOT_FOUND, detail=f'Deu ruim! O gênero {genero_id} não existe no sistema!'
-            )
+            raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=f'Deu ruim! O gênero {genero_id} não existe no sistema!')
     filme_db.generos.append(genero)
 
-    await db.add(
-        filme_db
-    )  # adiciona automaticamente na intermediária, porque filmes tem relationship com gêneros definida
+    await db.add(filme_db)  # adiciona automaticamente na intermediária, porque filmes tem relationship com gêneros definida
     await db.commit()
-    await db.refresh(
-        filme_db
-    )  # atualiza com as coisas que estão no banco (pega id e created_at, que não passados pelo usuário)
-    return filme_db
-
-
-# Acessar um filme específico
-@router.get('/{filme_id}', status_code=HTTPStatus.OK, response_model=MoviePublic)
-async def read_one_movie(filme_id: int, db: AsyncSession = Depends(get_session)):
-    # verificar se filme existe
-    filme_db = await db.scalar(select(MovieModel).where(MovieModel.id == filme_id))
-    if not filme_db:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Deu ruim! Não achei o filme.')
+    await db.refresh(filme_db)  # atualiza com as coisas que estão no banco (pega id e created_at, que não passados pelo usuário)
     return filme_db
 
 
@@ -72,13 +56,24 @@ async def read_movies(
     per_page: int = Query(10, ge=1, description='Número de filmes por página'),
     db: AsyncSession = Depends(get_session),
 ):
-    print(f'page recebido: {repr(page)}')
-    filmes = await db.scalars(select(MovieModel).limit(per_page).offset((page - 1) * per_page))
+    filmes = await db.scalars(
+        select(MovieModel).limit(per_page).offset((page - 1) * per_page)
+    )
     return {'filmes': filmes}
 
     # limit = retorna n registros no máximo
     # offset = pula os n primeiros registros; define a partir de qual ele começa a pegar
     # query = query string(valor padrão caso não seja passado nada, greater or equal to 1)
+
+
+# Acessar um filme específico
+@router.get('/{filme_id}', status_code=HTTPStatus.OK, response_model=MoviePublic)
+async def read_one_movie(filme_id: int, db: AsyncSession = Depends(get_session)):
+    # verificar se filme existe
+    filme_db = await db.scalar(select(MovieModel).where(MovieModel.id == filme_id))
+    if not filme_db:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Deu ruim! Não achei o filme.')
+    return filme_db
 
 
 # Alterar um filme

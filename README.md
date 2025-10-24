@@ -552,13 +552,36 @@ db.add()
 await db.flush()  # gera o ID, mas ainda não salva definitivamente
 print(filme.id)  # já disponível
 await db.commit()
-scalars() -> Extrai só o conteúdo principal de cada linha, ou seja, retorna só os objetos. 
+
+scalars() -> executa uma consulta (query) e extrai os valores diretamente como objetos (transforma o retorno do select)
+Imagine:
+Você tem uma tabela filmes no banco, com estes dados:
+| id | titulo  | ano  |
+| -- | ------- | ---- |
+| 1  | Matrix  | 1999 |
+| 2  | Avatar  | 2009 |
+| 3  | Titanic | 1997 |
+
+Sem o scalars:
+result = await session.execute(select(Filme))
+Resultado: [(<Filme id=1 titulo='Matrix'>,), (<Filme id=2 titulo='Avatar'>,), (<Filme id=3 titulo='Titanic'>,)]
+Cada resultado é uma tupla com um elemento dentro — ou seja, está "embrulhado" em parênteses.
+Quando você adiciona .scalars(), ele tira esse embrulho, pegando só o valor principal:
+result = await session.execute(select(Filme))
+filmes = result.scalars().all()
+Resultado: [<Filme id=1 titulo='Matrix'>, <Filme id=2 titulo='Avatar'>, <Filme id=3 titulo='Titanic'>]
+
+Se você quisesse só os títulos dos filmes:
+com select: [('Matrix',), ('Avatar',), ('Titanic',)]
+com scalars: ['Matrix', 'Avatar', 'Titanic']
+! Tuplas você só consegue acessar por posição !
 
 expire(objeto) -> Marca um objeto para ser recarregado da próxima vez que for acessado.
 ex:
 db.expire(filme) # Agora, ao acessar filme.titulo, ele busca do banco novamente
 
 close() -> Fecha a sessão (ou a conexão com o banco).
+get() -> quando você sabe exatamente qual registro buscar, ou seja, busca pela chave primária (id)
 
 
 Se a engine é o roteador,

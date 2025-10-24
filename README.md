@@ -881,6 +881,14 @@ async def create_movie(filme: MovieSchema):
         return novo_filme
     finally:
         await session.close()
+        
+------
+
+Scalar ou scalars
+| Método          | O que retorna                                                                                       | Quando usar                                                                                                                       |
+| --------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| **`scalar()`**  | Retorna **um único valor** (ex: uma coluna específica, não um modelo inteiro)               | Quando sua query seleciona **uma única coluna** (por exemplo, um `count()`, `func.max()`, ou `select(User.id)` se quiser só o ID) |
+| **`scalars()`** | Retorna um objetos | Quando sua query seleciona **modelos inteiros** (ex: `select(UserModel)`)                                                         |
 
 
 ------

@@ -2,73 +2,131 @@
 
 from http import HTTPStatus
 
-from fastapi import APIRoute, Depends, Response, HTTPException
-
-from schemas.filme_schema import MessageSchema, MovieList, MoviePublic, MovieSchema
-from models.filme_model import MovieModel
-from models.genero_model import GeneroModel
-
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.deps import get_session
+from models.filme_model import MovieModel
+from models.genero_model import GeneroModel
+from schemas.filme_schema import MessageSchema, MovieList, MoviePublic, MovieSchema
 
 # Criando o roteador
 router = APIRouter(prefix='/filmes', tags=['Filmes'])  # tags -> vai agrupar na documentação automática do FastAPI
 
 
-# Salvar um novo filme no
+# Salvar um novo filme
 @router.post('/', status_code=HTTPStatus.CREATED, response_model=MoviePublic)
-def create_movie(filme: MovieSchema, db: AsyncSession = Depends(get_session)):
+async def create_movie(filme: MovieSchema, db: AsyncSession = Depends(get_session)):
     # verificar se filme já existe
-    filme_db = db.scalar(
-        select(MovieModel).where(
-            (MovieModel.titulo == filme.titulo) & (MovieModel.ano == filme.ano)
-        )
+    filme_db = await db.scalar(
+        select(MovieModel).where((MovieModel.titulo == filme.titulo) & (MovieModel.ano == filme.ano))
     )
     # retorna erro se já existir
     if filme_db:
         raise HTTPException(status_code=HTTPStatus.CONFLICT, detail='Esse filme já existe!')
 
-    # adiciona no banco
+    # converte de objeto python para modelo do banco e salva
     filme_db = MovieModel(
-        titulo = filme.titulo,
-        duracao = filme.duracao,
-        ano = filme.ano,
-        capa = filme.capa,
-        avaliacao_interna = filme.avaliacao_interna
+        titulo=filme.titulo,
+        duracao=filme.duracao,
+        ano=filme.ano,
+        capa=filme.capa,
+        avaliacao_interna=filme.avaliacao_interna,
+        generos=[],
     )
 
-    # pega os generos
+    # pega os generos e verifica se existem
     for genero_id in filme.generos:
-        genero = db.get(GeneroModel, genero_id)
-        filme_db.generos.append(genero)
+        genero = await db.get(GeneroModel, genero_id)
+        if not genero:
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND, detail=f'Deu ruim! O gênero {genero_id} não existe no sistema!'
+            )
+    filme_db.generos.append(genero)
 
-    db.add(filme_db)
-    db.commit()
-    db.refresh(filme_db) # atualiza com as coisas que estão no banco (id e created_at, que não passados pelo usuário)
+    await db.add(
+        filme_db
+    )  # adiciona automaticamente na intermediária, porque filmes tem relationship com gêneros definida
+    await db.commit()
+    await db.refresh(
+        filme_db
+    )  # atualiza com as coisas que estão no banco (pega id e created_at, que não passados pelo usuário)
     return filme_db
 
 
 # Acessar um filme específico
 @router.get('/{filme_id}', status_code=HTTPStatus.OK, response_model=MoviePublic)
-def read_one_movie(filme_id: int):
-    return
+async def read_one_movie(filme_id: int, db: AsyncSession = Depends(get_session)):
+    # verificar se filme existe
+    filme_db = await db.scalar(select(MovieModel).where(MovieModel.id == filme_id))
+    if not filme_db:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Deu ruim! Não achei o filme.')
+    return filme_db
 
 
 # Listar todos os filmes
 @router.get('/', status_code=HTTPStatus.OK, response_model=MovieList)
-def read_movies():
-    return
+async def read_movies(
+    page: int = Query(1, ge=1, description='Número da página'),
+    per_page: int = Query(10, ge=1, description='Número de filmes por página'),
+    db: AsyncSession = Depends(get_session),
+):
+    print(f'page recebido: {repr(page)}')
+    filmes = await db.scalars(select(MovieModel).limit(per_page).offset((page - 1) * per_page))
+    return {'filmes': filmes}
+
+    # limit = retorna n registros no máximo
+    # offset = pula os n primeiros registros; define a partir de qual ele começa a pegar
+    # query = query string(valor padrão caso não seja passado nada, greater or equal to 1)
 
 
 # Alterar um filme
 @router.put('/{fime_id}', status_code=HTTPStatus.OK, response_model=MoviePublic)
-def update_movie(filme_id: int, filme: MovieSchema):
-    return
+async def update_movie(filme_id: int, filme: MovieSchema, db: AsyncSession = Depends(get_session)):
+    # verificar se filme existe
+    filme_db = await db.scalar(select(MovieModel).where(MovieModel.id == filme_id))
+    if not filme_db:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Este filme ainda não foi cadastrado!')
+
+    # verificar se o put vai gerar filme duplicado
+    filme_duplicado = await db.scalar(
+        select(MovieModel).where((MovieModel.titulo == filme.titulo) & (MovieModel.ano == filme.ano))
+    )
+    if filme_duplicado:
+        raise HTTPException(HTTPStatus.CONFLICT, detail='Esse filme já existe!')
+
+    # alterar os dados
+    filme_db.titulo = filme.titulo
+    filme_db.duracao = filme.duracao
+    filme_db.ano = filme.ano
+    filme_db.capa = filme.capa
+    filme_db.avaliacao_interna = filme.avaliacao_interna
+    filme_db.generos = []
+
+    # pega os generos e verifica se existem
+    for genero_id in filme.generos:
+        genero = await db.get(GeneroModel, genero_id)
+        if not genero:
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND, detail=f'Deu ruim! O gênero {genero_id} não existe no sistema!'
+            )
+    filme_db.generos = filme.generos
+
+    # salva as alterações
+    db.add(filme_db)
+    await db.commit()
+    return filme
 
 
 # Deletar um filme
 @router.delete('/{filme_id}', status_code=HTTPStatus.OK, response_model=MessageSchema)
-def delete_filme(filme_id: int):
-    return
+async def delete_filme(filme_id: int, db: AsyncSession = Depends(get_session)):
+    # verificar se filme existe
+    filme_db = await db.scalar(select(MovieModel).where(MovieModel.id == filme_id))
+    if not filme_db:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Deu ruim! Não achei o filme.')
+
+    db.delete(filme_db)
+    await db.commit()
+    return {'message': f'Filme {filme_db.titulo} deletado!'}

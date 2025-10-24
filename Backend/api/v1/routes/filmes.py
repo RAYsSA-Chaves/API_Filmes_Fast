@@ -19,7 +19,7 @@ router = APIRouter(prefix='/filmes', tags=['Filmes'])  # tags -> vai agrupar na 
 @router.post('/', status_code=HTTPStatus.CREATED, response_model=MoviePublic)
 async def create_movie(filme: MovieSchema, db: AsyncSession = Depends(get_session)):
     # verificar se filme já existe
-    filme_db = await db.scalar(
+    filme_db = await db.scalars(
         select(MovieModel).where((MovieModel.titulo == filme.titulo) & (MovieModel.ano == filme.ano))
     )
     # retorna erro se já existir
@@ -59,7 +59,7 @@ async def read_movies(
     filmes = await db.scalars(
         select(MovieModel).limit(per_page).offset((page - 1) * per_page)
     )
-    return {'filmes': filmes}
+    return {'filmes': filmes.all()}
 
     # limit = retorna n registros no máximo
     # offset = pula os n primeiros registros; define a partir de qual ele começa a pegar
@@ -70,7 +70,7 @@ async def read_movies(
 @router.get('/{filme_id}', status_code=HTTPStatus.OK, response_model=MoviePublic)
 async def read_one_movie(filme_id: int, db: AsyncSession = Depends(get_session)):
     # verificar se filme existe
-    filme_db = await db.scalar(select(MovieModel).where(MovieModel.id == filme_id))
+    filme_db = await db.scalars(select(MovieModel).where(MovieModel.id == filme_id))
     if not filme_db:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Deu ruim! Não achei o filme.')
     return filme_db
@@ -80,12 +80,12 @@ async def read_one_movie(filme_id: int, db: AsyncSession = Depends(get_session))
 @router.put('/{fime_id}', status_code=HTTPStatus.ACCEPTED, response_model=MoviePublic)
 async def update_movie(filme_id: int, filme: MovieSchema, db: AsyncSession = Depends(get_session)):
     # verificar se filme existe
-    filme_db = await db.scalar(select(MovieModel).where(MovieModel.id == filme_id))
+    filme_db = await db.scalars(select(MovieModel).where(MovieModel.id == filme_id))
     if not filme_db:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Este filme ainda não foi cadastrado!')
 
     # verificar se o put vai gerar filme duplicado
-    filme_duplicado = await db.scalar(
+    filme_duplicado = await db.scalars(
         select(MovieModel).where((MovieModel.titulo == filme.titulo) & (MovieModel.ano == filme.ano) & (MovieModel.id != filme_id)))
     if filme_duplicado:
         raise HTTPException(HTTPStatus.CONFLICT, detail='Esse filme já existe!')
@@ -116,7 +116,7 @@ async def update_movie(filme_id: int, filme: MovieSchema, db: AsyncSession = Dep
 @router.delete('/{filme_id}', status_code=HTTPStatus.OK, response_model=MessageSchema)
 async def delete_filme(filme_id: int, db: AsyncSession = Depends(get_session)):
     # verificar se filme existe
-    filme_db = await db.scalar(select(MovieModel).where(MovieModel.id == filme_id))
+    filme_db = await db.scalars(select(MovieModel).where(MovieModel.id == filme_id))
     if not filme_db:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Deu ruim! Não achei o filme.')
 

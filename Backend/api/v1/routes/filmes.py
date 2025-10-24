@@ -77,7 +77,7 @@ async def read_one_movie(filme_id: int, db: AsyncSession = Depends(get_session))
 
 
 # Alterar um filme
-@router.put('/{fime_id}', status_code=HTTPStatus.OK, response_model=MoviePublic)
+@router.put('/{fime_id}', status_code=HTTPStatus.ACCEPTED, response_model=MoviePublic)
 async def update_movie(filme_id: int, filme: MovieSchema, db: AsyncSession = Depends(get_session)):
     # verificar se filme existe
     filme_db = await db.scalar(select(MovieModel).where(MovieModel.id == filme_id))
@@ -86,8 +86,7 @@ async def update_movie(filme_id: int, filme: MovieSchema, db: AsyncSession = Dep
 
     # verificar se o put vai gerar filme duplicado
     filme_duplicado = await db.scalar(
-        select(MovieModel).where((MovieModel.titulo == filme.titulo) & (MovieModel.ano == filme.ano))
-    )
+        select(MovieModel).where((MovieModel.titulo == filme.titulo) & (MovieModel.ano == filme.ano) & (MovieModel.id != filme_id)))
     if filme_duplicado:
         raise HTTPException(HTTPStatus.CONFLICT, detail='Esse filme já existe!')
 
@@ -109,7 +108,6 @@ async def update_movie(filme_id: int, filme: MovieSchema, db: AsyncSession = Dep
     filme_db.generos = filme.generos
 
     # salva as alterações
-    db.add(filme_db)
     await db.commit()
     return filme
 
@@ -124,4 +122,4 @@ async def delete_filme(filme_id: int, db: AsyncSession = Depends(get_session)):
 
     db.delete(filme_db)
     await db.commit()
-    return {'message': f'Filme {filme_db.titulo} deletado!'}
+    return {'message': f'Filme "{filme_db.titulo}" deletado!'}

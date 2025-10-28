@@ -6,9 +6,15 @@ from pydantic import BaseModel
 
 
 # para post de gênero
+class GeneroCreate(BaseModel):
+    genero: str
+
+
+# para retorno dos gêneros
 class GeneroSchema(BaseModel):
     id: int
     genero: str
+    model_config = {"from_attributes": True}
 
 
 # para listar todos os gêneros

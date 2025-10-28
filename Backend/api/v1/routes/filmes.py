@@ -3,8 +3,9 @@
 from http import HTTPStatus
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from core.deps import get_session
 from models.filme_model import MovieModel
@@ -20,7 +21,10 @@ router = APIRouter(prefix='/filmes', tags=['Filmes'])  # tags -> vai agrupar na 
 async def create_movie(filme: MovieSchema, db: AsyncSession = Depends(get_session)):
     # verificar se filme já existe
     filme_db = await db.scalar(
-        select(MovieModel).where((MovieModel.titulo == filme.titulo) & (MovieModel.ano == filme.ano))
+        select(MovieModel).where(
+            (func.lower(MovieModel.titulo) == (filme.titulo.lower())) & 
+            (MovieModel.ano == filme.ano)
+        )
     )
     # retorna erro se já existir
     if filme_db:
@@ -40,12 +44,14 @@ async def create_movie(filme: MovieSchema, db: AsyncSession = Depends(get_sessio
     for genero_id in filme.generos:
         genero = await db.get(GeneroModel, genero_id)
         if not genero:
-            raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=f'Deu ruim! O gênero {genero_id} não existe no sistema!')
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND, detail=f'Deu ruim! O gênero {genero_id} não existe no sistema!'
+            )
         novo_filme.generos.append(genero)
 
-    await db.add(novo_filme)  # adiciona automaticamente na intermediária, porque filmes tem relationship com gêneros definida
+    db.add(novo_filme)  # adiciona automaticamente na intermediária, porque filmes tem relationship com gêneros definida
     await db.commit()
-    await db.refresh(novo_filme)  # atualiza com as coisas que estão no banco (pega id e created_at, que não passados pelo usuário)
+    await db.refresh(novo_filme, attribute_names=["generos"]) # atualiza com as coisas que estão no banco (pega id e created_at, que não passados pelo usuário e os relacionamentos da intermediária)
     return novo_filme
 
 
@@ -56,11 +62,12 @@ async def read_movies(
     per_page: int = Query(10, ge=1, description='Número de filmes por página'),
     db: AsyncSession = Depends(get_session),
 ):
-    filmes = await db.scalars(
-        select(MovieModel).limit(per_page).offset((page - 1) * per_page)
-    )
-    filmes = result.all()
-    return {'filmes': filmes}
+    filmes = await db.scalars(select(MovieModel)
+                                .options(selectinload(MovieModel.generos)) # força carregar os gêneros
+                                .limit(per_page)
+                                .offset((page - 1) * per_page)
+                            )
+    return {'filmes': filmes.all()}
 
     # limit = retorna n registros no máximo
     # offset = pula os n primeiros registros; define a partir de qual ele começa a pegar
@@ -71,7 +78,10 @@ async def read_movies(
 @router.get('/{filme_id}', status_code=HTTPStatus.OK, response_model=MoviePublic)
 async def read_one_movie(filme_id: int, db: AsyncSession = Depends(get_session)):
     # verificar se filme existe
-    filme_db = await db.scalar(select(MovieModel).where(MovieModel.id == filme_id))
+    filme_db = await db.scalar(select(MovieModel)
+                               .where(MovieModel.id == filme_id)
+                               .options(selectinload(MovieModel.generos))
+                               )
     if not filme_db:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Deu ruim! Não achei o filme.')
     return filme_db
@@ -81,14 +91,19 @@ async def read_one_movie(filme_id: int, db: AsyncSession = Depends(get_session))
 @router.put('/{filme_id}', status_code=HTTPStatus.ACCEPTED, response_model=MoviePublic)
 async def update_movie(filme_id: int, filme: MovieSchema, db: AsyncSession = Depends(get_session)):
     # verificar se filme existe
-    filme_db = await db.scalar(select(MovieModel).where(MovieModel.id == filme_id))
+    filme_db = await db.scalar(select(MovieModel)
+                               .where(MovieModel.id == filme_id)
+                               .options(selectinload(MovieModel.generos))
+                               )
     if not filme_db:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Filme não encontrado!')
 
     # verificar se o put vai gerar filme duplicado
     filme_duplicado = await db.scalar(
         select(MovieModel).where(
-            (MovieModel.titulo == filme.titulo) & (MovieModel.ano == filme.ano) & (MovieModel.id != filme_id)
+            (func.lower(MovieModel.titulo) == (filme.titulo.lower())) & 
+            (MovieModel.ano == filme.ano) & 
+            (MovieModel.id != filme_id)
         )
     )
     if filme_duplicado:
@@ -97,8 +112,7 @@ async def update_movie(filme_id: int, filme: MovieSchema, db: AsyncSession = Dep
     # verificar se foram enviados gêneros
     if not filme.generos or len(filme.generos) == 0:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail='É obrigatório informar pelo menos um gênero para o filme!'
+            status_code=HTTPStatus.BAD_REQUEST, detail='É obrigatório informar pelo menos um gênero para o filme!'
         )
 
     # alterar os dados
@@ -114,10 +128,9 @@ async def update_movie(filme_id: int, filme: MovieSchema, db: AsyncSession = Dep
         genero = await db.get(GeneroModel, genero_id)
         if not genero:
             raise HTTPException(
-                status_code=HTTPStatus.NOT_FOUND, 
-                detail=f'Deu ruim! O gênero {genero_id} não existe no sistema!'
+                status_code=HTTPStatus.NOT_FOUND, detail=f'Deu ruim! O gênero {genero_id} não existe no sistema!'
             )
-    filme_db.generos = filme.generos
+        filme_db.generos.append(genero)
 
     # salva as alterações
     await db.commit()
@@ -134,6 +147,6 @@ async def delete_filme(filme_id: int, db: AsyncSession = Depends(get_session)):
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Deu ruim! Não achei o filme.')
 
     # deletar
-    db.delete(filme_db)
+    await db.delete(filme_db)
     await db.commit()
-    return {'message': f'Filme "{filme_db.titulo}" deletado com sucesso!'}
+    return {'message': f'Filme {filme_db.titulo} deletado com sucesso!'}

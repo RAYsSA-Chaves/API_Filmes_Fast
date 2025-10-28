@@ -42,6 +42,10 @@ class MoviePublic(BaseModel):
     ano: int
     capa: AnyUrl
     generos: List[GeneroSchema]
+    model_config = {"from_attributes": True}
+
+    # model_config -> o FastAPI tenta acessar os campos como se fosse obj["id"], mas o SQLAlchemy trabalha com obj.id, isso gera erro, ele não consegue tranformar em json; essa configuração informa ao Pydantic que o modelo pode ser criado a partir de atributos de um objeto
+    # “Pydantic, quando você receber um objeto (em vez de um dict), acesse seus atributos com ponto (obj.atributo) e monte o schema a partir disso.”
 
 
 # para salvar no fake db

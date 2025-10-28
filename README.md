@@ -901,6 +901,12 @@ Para “abrir” o que tem dentro, você precisa escolher como quer consumir os 
 | `.first()` | O **primeiro resultado** ou `None` | `MovieModel` (ou `None`) | Quando você espera **um único registro** (ex: buscar por ID) |
 | `.all()`   | **Lista com todos os resultados**  | `list[MovieModel]`       | Quando você quer **vários registros** (ex: listar filmes, gêneros, etc.)                       |
 
+----
+
+# Autenticação X Autorização 
+Autenticação é quem você, suas credenciais, uma validação se você é você mesmo e pode acessar o sistema (ex: token, senha, biometria, etc)
+Autorização 
+A partir de quem você é na aplicação, o que você pode fazer ou não
 
 ------
 

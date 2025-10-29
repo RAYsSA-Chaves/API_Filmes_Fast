@@ -905,8 +905,64 @@ Para “abrir” o que tem dentro, você precisa escolher como quer consumir os 
 
 # Autenticação X Autorização 
 Autenticação é quem você, suas credenciais, uma validação se você é você mesmo e pode acessar o sistema (ex: token, senha, biometria, etc)
+! Nunca salve dados sensíveis brutos (senhas, por exemplo, devem ser guardadas no banco encriptadas)
 Autorização 
 A partir de quem você é na aplicação, o que você pode fazer ou não
+
+# Token JWT
+(json web token)
+Possui limite de expiração; permite que o usuário faça determinadas coisas com o servidor por um determinado tempo. Quando passa do tempo, ele não é mais aceito — o usuário precisa logar de novo.
+É uma forma de assinatura de um servidor. O token diz que o cliente foi autenticado com a assinatura >>daquele<< servidor.
+
+Partes do token:
+Header = algoritmo + tipo de token
+Payload = dados que serão usados para assinatura; São as informações sobre o usuário (ou sobre o token) que o servidor quer guardar. Essas informações não são secretas — são apenas assinadas, não criptografadas.
+Assinatura = aplicação do algoritmo + chave secreta da aplicação; O servidor pega o Header + Payload, aplica o algoritmo do Header (ex: HS256) e usa sua chave secreta para gerar a assinatura.
+
+JWT (JSON Web Token) é um “cartão de acesso digital”.
+O servidor o entrega para o usuário depois que ele faz login com sucesso, e o usuário usa esse token pra provar que já foi autenticado.
+
+💬 Em vez de o usuário mandar email e senha a cada requisição,
+ele manda o token — e o servidor confere se o token é válido e ainda não expirou.
+
+Header:
+{
+  "alg": "HS256",
+  "typ": "JWT"
+}
+
+Payload:
+{
+  "user_id": 7,
+  "email": "rayssa@email.com",
+  "role": "admin",
+  "exp": 1730102400   // expiração em timestamp
+}
+
+Assinatura:
+HMACSHA256(
+  base64UrlEncode(header) + "." + base64UrlEncode(payload),
+  "minha_chave_super_secreta"
+)
+
+tudo isso é codificado em Base64, virando algo como:
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.
+eyJ1c2VyX2lkIjo3LCJlbWFpbCI6InJheXNzYUBlbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJleHAiOjE3MzAxMDI0MDB9.
+rLk9x6QoT2Zg8r82n6wTZvdZ0hBxxaFgN8C3Fi6dxkI
+
+Esse token contém:
+Quem é você (ex: seu ID e email)
+Até quando vale (ex: 30 minutos)
+Uma assinatura secreta do servidor (pra ninguém falsificar)
+
+Agora, cada vez que você acessa algo protegido (por exemplo, “/meus-filmes-favoritos”),
+seu navegador envia o token junto:
+Authorization: Bearer abc.def.ghi
+O servidor pega o token, lê as informações dentro dele e diz:
+“Ah, esse token é da Rayssa, ele ainda está válido e foi assinado por mim. Tudo certo!”
+E ele te deixa acessar o conteúdo.
+
+A assinatura é como o carimbo do cinema, que só o funcionário do cinema sabe fazer.
 
 ------
 

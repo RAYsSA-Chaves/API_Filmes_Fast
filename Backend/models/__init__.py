@@ -9,3 +9,4 @@ table_registry = registry()
 from .filme_model import MovieModel as MovieModel
 from .genero_filme_model import GeneroFilmeModel as GeneroFilmeModel
 from .genero_model import GeneroModel as GeneroModel
+from .user_model import UserModel as UserModel

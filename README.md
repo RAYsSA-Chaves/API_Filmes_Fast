@@ -910,12 +910,15 @@ Autorização
 A partir de quem você é na aplicação, o que você pode fazer ou não
 
 # Token JWT
+
+Você já foi em algum evento que precisou apresentar um documento de identificação para comprovar que você era realmente a pessoa que comprou o ingresso? O ato de solicitar o documento de identificação é uma forma de autenticação para que você receba a autorização para entrar. Na web, esse processo funciona de forma parecida. Para fazer requisições de alguns serviços ou acessar páginas específicas, você precisa se identificar de alguma forma, e essa identificação precisa ser segura e única.
+
 (json web token)
 Possui limite de expiração; permite que o usuário faça determinadas coisas com o servidor por um determinado tempo. Quando passa do tempo, ele não é mais aceito — o usuário precisa logar de novo.
 É uma forma de assinatura de um servidor. O token diz que o cliente foi autenticado com a assinatura >>daquele<< servidor.
 
 Partes do token:
-Header = algoritmo + tipo de token
+Header = algoritmo (usado para codificar o token) + tipo de token
 Payload = dados que serão usados para assinatura; são as informações que o servidor quer guardar sobre o usuário (ou sobre o token). Essas informações não são secretas — são apenas assinadas, não criptografadas. 
 Assinatura = aplicação do algoritmo + chave secreta da aplicação; O servidor pega o Header + Payload, aplica o algoritmo do Header (ex: HS256) e usa sua chave secreta para gerar a assinatura. Ela é composta pelo header + payload + chave, assim, se o payload for modificado, a assinatura deixa de ser válida.
 
@@ -978,6 +981,10 @@ Como funciona:
 
 
 Bearer é o tipo de token de autenticação usado no header HTTP. Significa "portador". Ou seja, quem porta o token pode acessar os recursos protegidos. Ele apenas indica ao servidor que o valor que vem depois é um token JWT. 
+
+Os JWT proporcionam uma vantagem significativa de serem stateless. Isso significa que não é necessário fazer consultas constantes ao banco de dados para validar cada usuário à cada requisição feita. 
+
+Quando um usuário realiza a autenticação, um JWT é gerado e enviado ao usuário, que o incluirá em todas as requisições subsequentes. O servidor então valida o token enviado, eliminando a necessidade de consultar o banco de dados, fornecendo assim uma melhora significativa na performance da aplicação. 
 
 
 ------

@@ -916,8 +916,8 @@ Possui limite de expiração; permite que o usuário faça determinadas coisas c
 
 Partes do token:
 Header = algoritmo + tipo de token
-Payload = dados que serão usados para assinatura; São as informações sobre o usuário (ou sobre o token) que o servidor quer guardar. Essas informações não são secretas — são apenas assinadas, não criptografadas.
-Assinatura = aplicação do algoritmo + chave secreta da aplicação; O servidor pega o Header + Payload, aplica o algoritmo do Header (ex: HS256) e usa sua chave secreta para gerar a assinatura.
+Payload = dados que serão usados para assinatura; são as informações que o servidor quer guardar sobre o usuário (ou sobre o token). Essas informações não são secretas — são apenas assinadas, não criptografadas. 
+Assinatura = aplicação do algoritmo + chave secreta da aplicação; O servidor pega o Header + Payload, aplica o algoritmo do Header (ex: HS256) e usa sua chave secreta para gerar a assinatura. Ela é composta pelo header + payload + chave, assim, se o payload for modificado, a assinatura deixa de ser válida.
 
 JWT (JSON Web Token) é um “cartão de acesso digital”.
 O servidor o entrega para o usuário depois que ele faz login com sucesso, e o usuário usa esse token pra provar que já foi autenticado.
@@ -965,6 +965,8 @@ E ele te deixa acessar o conteúdo.
 A assinatura é como o carimbo do cinema, que só o funcionário do cinema sabe fazer.
 
 A chave deve sempre ser secreta. Por isso, usamos a biblioteca secrets do python que gera secredos
+
+JWT é um tipo de token de autenticação, usado para identificar um usuário de forma segura. ele é basicamente uma string codificada que carrega informações, como id do usuário, tempo de expiração e uma assinatura digital.
 
 ------
 

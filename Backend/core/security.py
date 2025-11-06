@@ -2,7 +2,7 @@
 
 from datetime import datetime, timezone, timedelta # timedelta -> armazena quantidades de tempo
 
-from jwt import encode
+from jwt import encode # gera o token e assinatura
 from pwdlib import PasswordHash
 
 pwd_context = PasswordHash.recommended()  # ele decide sozinho como hashear

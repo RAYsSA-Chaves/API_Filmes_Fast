@@ -968,6 +968,18 @@ A chave deve sempre ser secreta. Por isso, usamos a biblioteca secrets do python
 
 JWT é um tipo de token de autenticação, usado para identificar um usuário de forma segura. ele é basicamente uma string codificada que carrega informações, como id do usuário, tempo de expiração e uma assinatura digital.
 
+Como funciona:
+1. usuário faz login enviando email e senha para o servidor
+2. servidor valida as credenciais e gera um token JWT assinado com a chave secreta
+3. o token é devolvido ao cliente (geralmente salvo no localstorage ou cookie)
+4. em cada requisição posterior,  o cliente envia o token no header; ex:
+   Authorization: Bearer <token_aqui>
+5. o servidor valida a assinatura do token e verifica se o token é válido, se ainda não expirou, se o usuario tem permissão. se estiver tudo certo, o servidor autoriza a ação, caso contrário, retorna erro 401 (nao autorizado).
+
+
+Bearer é o tipo de token de autenticação usado no header HTTP. Significa "portador". Ou seja, quem porta o token pode acessar os recursos protegidos. Ele apenas indica ao servidor que o valor que vem depois é um token JWT. 
+
+
 ------
 
 Conteúdo principal estudado:

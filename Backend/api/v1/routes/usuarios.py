@@ -1,4 +1,4 @@
-# Lógica da API para requisições de usuários
+# Lógica da API para cadastro ou edição de usuários
 
 from http import HTTPStatus
 

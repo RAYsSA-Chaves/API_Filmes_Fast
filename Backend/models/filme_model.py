@@ -6,6 +6,7 @@ from sqlalchemy import DateTime, String, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from . import table_registry
+from .genero_model import GeneroModel
 
 # Mapped -> mapeia o tipo mais próximo do banco (ex: str aqui = varchar lá)
 # mapped_column -> entende automaticamente o contexto da classe e faz algumas configurações de mapeamento para dizer a coluna deve ser do tipo anotado em Mapped[...]

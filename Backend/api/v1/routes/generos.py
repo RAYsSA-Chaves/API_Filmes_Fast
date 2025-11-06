@@ -2,14 +2,14 @@
 
 from http import HTTPStatus
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select, func
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.deps import get_session
 from models.genero_model import GeneroModel
 from schemas.filme_schema import MessageSchema
-from schemas.genero_schema import GeneroList, GeneroSchema, GeneroCreate
+from schemas.genero_schema import GeneroCreate, GeneroList, GeneroSchema
 
 router = APIRouter(prefix='/generos', tags=['Gêneros'])
 
@@ -18,9 +18,7 @@ router = APIRouter(prefix='/generos', tags=['Gêneros'])
 @router.post('/', status_code=HTTPStatus.CREATED, response_model=GeneroSchema)
 async def create_genero(genero: GeneroCreate, db: AsyncSession = Depends(get_session)):
     # verificar se o gênero já existe
-    genero_db = await db.scalar(select(GeneroModel).where(
-        (func.lower(GeneroModel.genero)) == genero.genero.lower())
-        )
+    genero_db = await db.scalar(select(GeneroModel).where((func.lower(GeneroModel.genero)) == genero.genero.lower()))
     # retorna erro se já existir
     if genero_db:
         raise HTTPException(status_code=HTTPStatus.CONFLICT, detail='Esse gênero já existe!')

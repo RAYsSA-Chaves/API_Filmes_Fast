@@ -3,7 +3,7 @@
 from http import HTTPStatus
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -22,8 +22,7 @@ async def create_movie(filme: MovieSchema, db: AsyncSession = Depends(get_sessio
     # verificar se filme já existe
     filme_db = await db.scalar(
         select(MovieModel).where(
-            (func.lower(MovieModel.titulo) == (filme.titulo.lower())) & 
-            (MovieModel.ano == filme.ano)
+            (func.lower(MovieModel.titulo) == (filme.titulo.lower())) & (MovieModel.ano == filme.ano)
         )
     )
     # retorna erro se já existir
@@ -51,7 +50,9 @@ async def create_movie(filme: MovieSchema, db: AsyncSession = Depends(get_sessio
 
     db.add(novo_filme)  # adiciona automaticamente na intermediária, porque filmes tem relationship com gêneros definida
     await db.commit()
-    await db.refresh(novo_filme, attribute_names=["generos"]) # atualiza com as coisas que estão no banco (pega id e created_at, que não passados pelo usuário e os relacionamentos da intermediária)
+    await db.refresh(
+        novo_filme, attribute_names=['generos']
+    )  # atualiza com as coisas que estão no banco (pega id e created_at, que não passados pelo usuário e os relacionamentos da intermediária)
     return novo_filme
 
 
@@ -62,11 +63,12 @@ async def read_movies(
     per_page: int = Query(10, ge=1, description='Número de filmes por página'),
     db: AsyncSession = Depends(get_session),
 ):
-    filmes = await db.scalars(select(MovieModel)
-                                .options(selectinload(MovieModel.generos)) # força carregar os gêneros
-                                .limit(per_page)
-                                .offset((page - 1) * per_page)
-                            )
+    filmes = await db.scalars(
+        select(MovieModel)
+        .options(selectinload(MovieModel.generos))  # força carregar os gêneros
+        .limit(per_page)
+        .offset((page - 1) * per_page)
+    )
     return {'filmes': filmes.all()}
 
     # limit = retorna n registros no máximo
@@ -78,10 +80,9 @@ async def read_movies(
 @router.get('/{filme_id}', status_code=HTTPStatus.OK, response_model=MoviePublic)
 async def read_one_movie(filme_id: int, db: AsyncSession = Depends(get_session)):
     # verificar se filme existe
-    filme_db = await db.scalar(select(MovieModel)
-                               .where(MovieModel.id == filme_id)
-                               .options(selectinload(MovieModel.generos))
-                               )
+    filme_db = await db.scalar(
+        select(MovieModel).where(MovieModel.id == filme_id).options(selectinload(MovieModel.generos))
+    )
     if not filme_db:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Deu ruim! Não achei o filme.')
     return filme_db
@@ -91,19 +92,18 @@ async def read_one_movie(filme_id: int, db: AsyncSession = Depends(get_session))
 @router.put('/{filme_id}', status_code=HTTPStatus.ACCEPTED, response_model=MoviePublic)
 async def update_movie(filme_id: int, filme: MovieSchema, db: AsyncSession = Depends(get_session)):
     # verificar se filme existe
-    filme_db = await db.scalar(select(MovieModel)
-                               .where(MovieModel.id == filme_id)
-                               .options(selectinload(MovieModel.generos))
-                               )
+    filme_db = await db.scalar(
+        select(MovieModel).where(MovieModel.id == filme_id).options(selectinload(MovieModel.generos))
+    )
     if not filme_db:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Filme não encontrado!')
 
     # verificar se o put vai gerar filme duplicado
     filme_duplicado = await db.scalar(
         select(MovieModel).where(
-            (func.lower(MovieModel.titulo) == (filme.titulo.lower())) & 
-            (MovieModel.ano == filme.ano) & 
-            (MovieModel.id != filme_id)
+            (func.lower(MovieModel.titulo) == (filme.titulo.lower()))
+            & (MovieModel.ano == filme.ano)
+            & (MovieModel.id != filme_id)
         )
     )
     if filme_duplicado:

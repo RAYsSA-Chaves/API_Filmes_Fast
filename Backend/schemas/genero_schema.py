@@ -14,7 +14,7 @@ class GeneroCreate(BaseModel):
 class GeneroSchema(BaseModel):
     id: int
     genero: str
-    model_config = {"from_attributes": True}
+    model_config = {'from_attributes': True}
 
 
 # para listar todos os gêneros

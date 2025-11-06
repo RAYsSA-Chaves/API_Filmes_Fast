@@ -3,28 +3,34 @@
 from http import HTTPStatus
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm  # formulário padrão da web de requisição de senha
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from core.security import OAuth2PasswordRequestForm # formulário padrão da web de requisição de senha
-from core.security import get_password_hash, verify_password
 
 from core.deps import get_session
+from core.security import create_access_token, verify_password
 from models.user_model import UserModel
-from schemas.user_schema import UserPublic
-
+from schemas.token_schema import Token
 
 # Criando o roteador
 router = APIRouter(prefix='/token', tags=['Token'])
 
 
 # Validar credenciais
-@router.post('/')
-async def login_for_access_token(formData: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_session)):
+@router.post('/', response_model=Token)
+async def login_for_access_token(
+    formData: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_session)
+):
     # verificar se usuário existe
-    user_db = await db.scalar(select(UserModel).where(UserModel.email == formData.email))
+    user_db = await db.scalar(select(UserModel).where(UserModel.email == formData.username))
     if not user_db:
         raise HTTPException(status_code=HTTPStatus.UNAUTHORIZED, detail='Email e/ou senha incorreto(s)')
-    
+
     # validar a senha passada
-    if not verify_password(formData.senha, user_db.senha):
+    if not verify_password(formData.password, user_db.senha):
         raise HTTPException(status_code=HTTPStatus.UNAUTHORIZED, detail='Email e/ou senha incorreto(s)')
+
+    # gerar token
+    access_token = create_access_token({'sub': user_db.email})
+
+    return {'type': 'Bearer', 'token': access_token}

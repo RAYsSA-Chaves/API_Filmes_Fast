@@ -1,4 +1,4 @@
-# Lógica da API para testar validação de credenciais
+# Lógica da API para validar credenciais e gerar token (Login)
 
 from http import HTTPStatus
 

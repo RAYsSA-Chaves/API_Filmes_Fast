@@ -964,6 +964,8 @@ E ele te deixa acessar o conteúdo.
 
 A assinatura é como o carimbo do cinema, que só o funcionário do cinema sabe fazer.
 
+A chave deve sempre ser secreta. Por isso, usamos a biblioteca secrets do python que gera secredos
+
 ------
 
 Conteúdo principal estudado:

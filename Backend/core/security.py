@@ -7,8 +7,10 @@ from pwdlib import PasswordHash
 
 pwd_context = PasswordHash.recommended()  # ele decide sozinho como hashear
 
+import secrets  # gera "segredos" 
+
 # Variáveis para o token
-SECRET_KEY = 'my_super_secret_key'
+SECRET_KEY = secrets.token.urlsafe(32)
 ALGORITHM = 'HS256'
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 

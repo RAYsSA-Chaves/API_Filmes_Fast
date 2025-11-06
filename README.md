@@ -986,6 +986,8 @@ Os JWT proporcionam uma vantagem significativa de serem stateless. Isso signific
 
 Quando um usuário realiza a autenticação, um JWT é gerado e enviado ao usuário, que o incluirá em todas as requisições subsequentes. O servidor então valida o token enviado, eliminando a necessidade de consultar o banco de dados, fornecendo assim uma melhora significativa na performance da aplicação. 
 
+O token é um recurso de autorização e não autenticação. Após a autenticação ele é gerado para permitir acesso ou não às partes do sistema.
+
 
 ------
 

@@ -16,7 +16,7 @@ from schemas.token_schema import Token
 router = APIRouter(prefix='/token', tags=['Token'])
 
 
-# Validar credenciais e gerar token
+# Validar credenciais e gerar token (login)
 @router.post(
     '/', 
     response_model=Token, 

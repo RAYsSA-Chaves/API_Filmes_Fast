@@ -2,7 +2,7 @@
 
 from datetime import datetime, timezone, timedelta # timedelta -> armazena quantidades de tempo
 
-from jwt import encode # gera o token e assinatura
+from jwt import encode, decode, DecodeError  # encode -> transforma dados em token (formato seguro); decode -> converte de volta para os dados originais
 from pwdlib import PasswordHash
 
 pwd_context = PasswordHash.recommended()  # ele decide sozinho como hashear
@@ -42,6 +42,10 @@ def create_access_token(data: dict):
     return encoded_jwt
 
     
-# Função para verificar autorização
+# Função para validar token (autorização)
 def get_current_user(db: AsyncSession = Depends(get_session), token: str = Depends(oauth2_scheme)):
-    ...
+    try:
+        payload = decode(token, SECRET_KEY, algorithm=ALGORITHM)
+        subject_email = payload.get('sub')  # info do usuário que era passada no token
+    except DecodeError:
+        raise HTTPException(status_code=HTTPStatus.CONFLICT, detail='Esse filme já existe!')

@@ -11,6 +11,7 @@ from core.deps import get_session
 from models.filme_model import MovieModel
 from models.genero_model import GeneroModel
 from schemas.filme_schema import MessageSchema, MovieList, MoviePublic, MovieSchema
+from core.security import get_current_user  # vai impedir usuários não logados de acessar os endpoints (uso como dependência) -> coloca cadeado lá no Swagger
 
 # Criando o roteador
 router = APIRouter(prefix='/filmes', tags=['Filmes'])  # tags -> vai agrupar na documentação automática do FastAPI
@@ -18,7 +19,7 @@ router = APIRouter(prefix='/filmes', tags=['Filmes'])  # tags -> vai agrupar na 
 
 # Salvar um novo filme
 @router.post('/', status_code=HTTPStatus.CREATED, response_model=MoviePublic)
-async def create_movie(filme: MovieSchema, db: AsyncSession = Depends(get_session)):
+async def create_movie(filme: MovieSchema, db: AsyncSession = Depends(get_session), current_user = Depends(get_current_user)):
     # verificar se filme já existe
     filme_db = await db.scalar(
         select(MovieModel).where(

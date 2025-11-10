@@ -18,17 +18,16 @@ router = APIRouter(prefix='/token', tags=['Token'])
 
 # Validar credenciais e gerar token (login)
 @router.post(
-    '/', 
-    response_model=Token, 
-    summary= 'Autenticação de Usuário',
-    description= ''' 
+    '/',
+    response_model=Token,
+    summary='Autenticação de Usuário',
+    description=""" 
     Realiza login do usuário e gera token JWT.
     **Importante:** o campo `username` deve conter o `e-mail` do usuário!
-    '''
+    """,
 )
 async def login_for_access_token(
-    formData: OAuth2PasswordRequestForm = Depends(), 
-    db: AsyncSession = Depends(get_session)
+    formData: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_session)
 ):
     # verificar se usuário existe
     user_db = await db.scalar(select(UserModel).where(UserModel.email == formData.username))
@@ -42,4 +41,4 @@ async def login_for_access_token(
     # gerar token
     access_token = create_access_token({'sub': user_db.email})
 
-    return {'type': 'Bearer', 'token': access_token}
+    return {'access_token': access_token, 'token_type': 'bearer'}

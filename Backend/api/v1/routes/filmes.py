@@ -8,10 +8,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from core.deps import get_session
+from core.security import (
+    get_current_user,
+)  # vai impedir usuários não logados de acessar os endpoints (uso como dependência) -> coloca cadeado lá no Swagger
 from models.filme_model import MovieModel
 from models.genero_model import GeneroModel
 from schemas.filme_schema import MessageSchema, MovieList, MoviePublic, MovieSchema
-from core.security import get_current_user  # vai impedir usuários não logados de acessar os endpoints (uso como dependência) -> coloca cadeado lá no Swagger
 
 # Criando o roteador
 router = APIRouter(prefix='/filmes', tags=['Filmes'])  # tags -> vai agrupar na documentação automática do FastAPI
@@ -19,7 +21,9 @@ router = APIRouter(prefix='/filmes', tags=['Filmes'])  # tags -> vai agrupar na 
 
 # Salvar um novo filme
 @router.post('/', status_code=HTTPStatus.CREATED, response_model=MoviePublic)
-async def create_movie(filme: MovieSchema, db: AsyncSession = Depends(get_session), current_user = Depends(get_current_user)):
+async def create_movie(
+    filme: MovieSchema, db: AsyncSession = Depends(get_session), current_user=Depends(get_current_user)
+):
     # verificar se filme já existe
     filme_db = await db.scalar(
         select(MovieModel).where(
@@ -91,7 +95,9 @@ async def read_one_movie(filme_id: int, db: AsyncSession = Depends(get_session))
 
 # Alterar um filme
 @router.put('/{filme_id}', status_code=HTTPStatus.ACCEPTED, response_model=MoviePublic)
-async def update_movie(filme_id: int, filme: MovieSchema, db: AsyncSession = Depends(get_session)):
+async def update_movie(
+    filme_id: int, filme: MovieSchema, db: AsyncSession = Depends(get_session), current_user=Depends(get_current_user)
+):
     # verificar se filme existe
     filme_db = await db.scalar(
         select(MovieModel).where(MovieModel.id == filme_id).options(selectinload(MovieModel.generos))
@@ -141,7 +147,7 @@ async def update_movie(filme_id: int, filme: MovieSchema, db: AsyncSession = Dep
 
 # Deletar um filme
 @router.delete('/{filme_id}', status_code=HTTPStatus.OK, response_model=MessageSchema)
-async def delete_filme(filme_id: int, db: AsyncSession = Depends(get_session)):
+async def delete_filme(filme_id: int, db: AsyncSession = Depends(get_session), current_user=Depends(get_current_user)):
     # verificar se filme existe
     filme_db = await db.scalar(select(MovieModel).where(MovieModel.id == filme_id))
     if not filme_db:

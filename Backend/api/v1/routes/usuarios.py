@@ -7,7 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.deps import get_session
-from core.security import get_password_hash
+from core.security import get_current_user, get_password_hash
 from models.user_model import UserModel
 from schemas.user_schema import UserCreate, UserPublic
 
@@ -33,11 +33,15 @@ async def create_user(user: UserCreate, db: AsyncSession = Depends(get_session))
 
 # Alterar dados de um cadastro
 @router.put('/{user_id}', status_code=HTTPStatus.ACCEPTED, response_model=UserPublic)
-async def update_user(user_id: int, user: UserCreate, db: AsyncSession = Depends(get_session)):
-    # verifica se usuário existe
-    usuario = await db.get(UserModel, user_id)
-    if not usuario:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Usuário não encontrado!')
+async def update_user(
+    user_id: int,
+    user: UserCreate,
+    db: AsyncSession = Depends(get_session),
+    current_user: UserModel = Depends(get_current_user),  # verifica se usuário existe
+):
+    # apenas o usuario pode alterar seu próprio cadastro
+    if current_user.id != user_id:
+        raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail='Permissões insuficientes!')
 
     # verifica se o novo email não causa conflito
     email_duplicado = await db.scalar(
@@ -47,21 +51,21 @@ async def update_user(user_id: int, user: UserCreate, db: AsyncSession = Depends
         raise HTTPException(status_code=HTTPStatus.CONFLICT, detail='Email já cadastrado!')
 
     # atualiza os dados
-    usuario.email = user.email
-    usuario.senha = get_password_hash(user.senha)
+    current_user.email = user.email
+    current_user.senha = get_password_hash(user.senha)
 
     await db.commit()
-    await db.refresh(usuario)
-    return usuario
+    await db.refresh(current_user)
+    return current_user
 
 
 # Excluir um usuário
 @router.delete('/{user_id}', status_code=HTTPStatus.OK)
-async def delete_user(user_id: int, db: AsyncSession = Depends(get_session)):
-    usuario = await db.get(UserModel, user_id)
-    if not usuario:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Usuário não encontrado!')
+async def delete_user(user_id: int, db: AsyncSession = Depends(get_session), current_user=Depends(get_current_user)):
+    # apenas o próprio usuário pode deletar a sua conta
+    if current_user != user_id:
+        raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail='Permissões insuficientes!')
 
-    await db.delete(usuario)
+    await db.delete(current_user)
     await db.commit()
-    return {'message': f'Usuário {usuario.email} deletado com sucesso!'}
+    return {'message': f'Usuário {current_user.email} deletado com sucesso!'}

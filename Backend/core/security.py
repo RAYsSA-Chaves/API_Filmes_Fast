@@ -1,26 +1,40 @@
 # Hash de senhas e criação de token
 
-from datetime import datetime, timezone, timedelta # timedelta -> armazena quantidades de tempo
+from datetime import datetime, timedelta, timezone  # timedelta -> armazena quantidades de tempo
 
-from jwt import encode, decode, DecodeError  # encode -> transforma dados em token (formato seguro); decode -> converte de volta para os dados originais
+from jwt import (
+    DecodeError,
+    decode,
+    encode,
+)  # encode -> transforma dados em token (formato seguro); decode -> converte de volta para os dados originais
 from pwdlib import PasswordHash
 
 pwd_context = PasswordHash.recommended()  # ele decide sozinho como hashear
 
-import secrets  # gera "segredos" / números aleatórios e secretos
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from core.deps import get_session
-from fastapi import Depends
+from http import HTTPStatus
+
+from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer  # extrai token Bearer do header HTTP
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.deps import get_session
+from models import UserModel
 
 # Variáveis para o token
-SECRET_KEY = secrets.token.urlsafe(32)
+SECRET_KEY = 'my_super_secret_key'
 ALGORITHM = 'HS256'
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')  # indica o endpoint onde o cliente pode obter o token (documentação)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl='api/v1/token')  # indica o endpoint onde o cliente pode obter o token
+
+"""
+    Uso do OAuth2PasswordBearer:
+    - testar função de login;
+    - digite usuário e senha e ele vai excutar a função de login e gerar o token
+    - o token será passado nos headers das requisições automaticamente
+"""
 
 
 # Função para hashear uma senha
@@ -41,11 +55,31 @@ def create_access_token(data: dict):
     encoded_jwt = encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-    
+
 # Função para validar token (autorização)
-def get_current_user(db: AsyncSession = Depends(get_session), token: str = Depends(oauth2_scheme)):
+async def get_current_user(db: AsyncSession = Depends(get_session), token: str = Depends(oauth2_scheme)):
+    # padronizando erro:
+    credentials_exception = HTTPException(
+        status_code=HTTPStatus.UNAUTHORIZED,
+        detail='Credenciais não puderam ser validadas',
+        headers={'WWW-Authenticate': 'Bearer'},
+    )
+
     try:
-        payload = decode(token, SECRET_KEY, algorithm=ALGORITHM)
-        subject_email = payload.get('sub')  # info do usuário que era passada no token
+        # tenta validar o token passado no header
+        payload = decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        # pega info do usuário que era passada no token
+        subject_email = payload.get('sub')
+
+        if not subject_email:
+            raise credentials_exception
+
     except DecodeError:
-        raise HTTPException(status_code=HTTPStatus.CONFLICT, detail='Esse filme já existe!')
+        raise credentials_exception
+
+    # busca se usuário existe no banco
+    user = await db.scalar(select(UserModel).where(UserModel.email == subject_email))
+    if not user:
+        raise credentials_exception
+
+    return user

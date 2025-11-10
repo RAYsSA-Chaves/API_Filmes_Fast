@@ -7,6 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.deps import get_session
+from core.security import get_current_user
 from models.genero_model import GeneroModel
 from schemas.filme_schema import MessageSchema
 from schemas.genero_schema import GeneroCreate, GeneroList, GeneroSchema
@@ -16,7 +17,9 @@ router = APIRouter(prefix='/generos', tags=['Gêneros'])
 
 # Salvar um gênero novo
 @router.post('/', status_code=HTTPStatus.CREATED, response_model=GeneroSchema)
-async def create_genero(genero: GeneroCreate, db: AsyncSession = Depends(get_session)):
+async def create_genero(
+    genero: GeneroCreate, db: AsyncSession = Depends(get_session), current_user=Depends(get_current_user)
+):
     # verificar se o gênero já existe
     genero_db = await db.scalar(select(GeneroModel).where((func.lower(GeneroModel.genero)) == genero.genero.lower()))
     # retorna erro se já existir
@@ -42,7 +45,12 @@ async def read_generos(
 
 # Alterar um gênero
 @router.put('/{genero_id}', status_code=HTTPStatus.OK, response_model=GeneroSchema)
-async def update_genero(genero_id: int, genero: GeneroCreate, db: AsyncSession = Depends(get_session)):
+async def update_genero(
+    genero_id: int,
+    genero: GeneroCreate,
+    db: AsyncSession = Depends(get_session),
+    current_user=Depends(get_current_user),
+):
     # verificar se o gênero existe
     genero_db = await db.scalar(select(GeneroModel).where(GeneroModel.id == genero_id))
     if not genero_db:
@@ -64,7 +72,9 @@ async def update_genero(genero_id: int, genero: GeneroCreate, db: AsyncSession =
 
 # Deletar um gênero
 @router.delete('/{genero_id}', status_code=HTTPStatus.OK, response_model=MessageSchema)
-async def delete_genero(genero_id: int, db: AsyncSession = Depends(get_session)):
+async def delete_genero(
+    genero_id: int, db: AsyncSession = Depends(get_session), current_user=Depends(get_current_user)
+):
     # verificar se o gênero existe
     genero_db = await db.scalar(select(GeneroModel).where(GeneroModel.id == genero_id))
     if not genero_db:

@@ -27,7 +27,8 @@ router = APIRouter(prefix='/token', tags=['Token'])
     '''
 )
 async def login_for_access_token(
-    formData: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_session)
+    formData: OAuth2PasswordRequestForm = Depends(), 
+    db: AsyncSession = Depends(get_session)
 ):
     # verificar se usuário existe
     user_db = await db.scalar(select(UserModel).where(UserModel.email == formData.username))

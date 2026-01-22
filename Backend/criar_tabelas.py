@@ -14,7 +14,7 @@ async def create_tables() -> None:
     # async with garante que a conexão seja fechada automaticamente
     async with engine.begin() as conn:
         # Deleta todas as tabelas existentes
-        # run_sync é necessário porque drop_all é uma função síncrona
+        # run_sync é necessário porque não faz sentido pausar a criação da tabela e depois voltar, pode causar erros
         await conn.run_sync(table_registry.metadata.drop_all)
 
         # Cria todas as tabelas que estão registradas no registry

@@ -637,6 +637,8 @@ async def get_filmes():
 Requisições não bloqueiam enquanto espera o banco.
 Escala muito melhor em APIs com FastAPI que recebem múltiplas requisições simultâneas.
 
+Ao encontrar um await, a requisição anterior AGUARDA a nova requisição ser processada e depois volta e assim por diante, é um loop, até que ele processe tudo o que precisa ser processado.
+
 A ideia do async
 async é como dizer para a função:
 "Ei, essa função pode parar e deixar outra coisa rodar enquanto espera alguma coisa terminar."

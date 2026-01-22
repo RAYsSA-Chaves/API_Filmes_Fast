@@ -1,6 +1,7 @@
 # Lógica da API para cadastro ou edição de usuários
 
 from http import HTTPStatus
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
@@ -13,10 +14,13 @@ from schemas.user_schema import UserCreate, UserPublic
 
 router = APIRouter(prefix='/usuarios', tags=['Usuários'])
 
+Session = Annotated[AsyncSession, Depends(get_session)]
+CurrentUser = Annotated[UserModel, Depends(get_current_user)]
+
 
 # Cadastrar novo usuário
 @router.post('/', status_code=HTTPStatus.CREATED, response_model=UserPublic)
-async def create_user(user: UserCreate, db: AsyncSession = Depends(get_session)):
+async def create_user(user: UserCreate, db: Session):
     # verificar se email já existe
     user_db = await db.scalar(select(UserModel).where(func.lower(UserModel.email) == user.email.lower()))
     if user_db:
@@ -36,8 +40,8 @@ async def create_user(user: UserCreate, db: AsyncSession = Depends(get_session))
 async def update_user(
     user_id: int,
     user: UserCreate,
-    db: AsyncSession = Depends(get_session),
-    current_user: UserModel = Depends(get_current_user),  # verifica se usuário existe
+    db: Session,
+    current_user: CurrentUser,  # verifica se usuário existe
 ):
     # apenas o usuario pode alterar seu próprio cadastro
     if current_user.id != user_id:
@@ -45,7 +49,7 @@ async def update_user(
 
     # verifica se o novo email não causa conflito
     email_duplicado = await db.scalar(
-        select(UserModel).where(func.lower(UserModel.email) == user.email.lower() & UserModel.id != user_id)
+        select(UserModel).where((func.lower(UserModel.email) == user.email.lower()) & (UserModel.id != user_id))
     )
     if email_duplicado:
         raise HTTPException(status_code=HTTPStatus.CONFLICT, detail='Email já cadastrado!')
@@ -61,9 +65,9 @@ async def update_user(
 
 # Excluir um usuário
 @router.delete('/{user_id}', status_code=HTTPStatus.OK)
-async def delete_user(user_id: int, db: AsyncSession = Depends(get_session), current_user=Depends(get_current_user)):
+async def delete_user(user_id: int, db: Session, current_user: CurrentUser):
     # apenas o próprio usuário pode deletar a sua conta
-    if current_user != user_id:
+    if current_user.id != user_id:
         raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail='Permissões insuficientes!')
 
     await db.delete(current_user)

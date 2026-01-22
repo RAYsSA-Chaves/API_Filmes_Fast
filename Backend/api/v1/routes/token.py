@@ -1,6 +1,7 @@
 # Lógica da API para validar credenciais e gerar token (Login)
 
 from http import HTTPStatus
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm  # formulário padrão da web de requisição de senha
@@ -15,20 +16,21 @@ from schemas.token_schema import Token
 # Criando o roteador
 router = APIRouter(prefix='/token', tags=['Token'])
 
+Session = Annotated[AsyncSession, Depends(get_session)]
+OAuth2Form = Annotated[OAuth2PasswordRequestForm, Depends()]
+
 
 # Validar credenciais e gerar token (login)
 @router.post(
     '/',
     response_model=Token,
     summary='Autenticação de Usuário',
-    description=""" 
+    description="""
     Realiza login do usuário e gera token JWT.
     **Importante:** o campo `username` deve conter o `e-mail` do usuário!
     """,
 )
-async def login_for_access_token(
-    formData: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_session)
-):
+async def login_for_access_token(formData: OAuth2Form, db: Session):
     # verificar se usuário existe
     user_db = await db.scalar(select(UserModel).where(UserModel.email == formData.username))
     if not user_db:

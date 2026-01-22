@@ -1,6 +1,7 @@
 # Lógica da API para requisições de gêneros
 
 from http import HTTPStatus
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
@@ -9,17 +10,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.deps import get_session
 from core.security import get_current_user
 from models.genero_model import GeneroModel
+from models.user_model import UserModel
 from schemas.filme_schema import MessageSchema
 from schemas.genero_schema import GeneroCreate, GeneroList, GeneroSchema
 
 router = APIRouter(prefix='/generos', tags=['Gêneros'])
 
+Session = Annotated[AsyncSession, Depends(get_session)]
+CurrentUser = Annotated[UserModel, Depends(get_current_user)]
+
 
 # Salvar um gênero novo
 @router.post('/', status_code=HTTPStatus.CREATED, response_model=GeneroSchema)
-async def create_genero(
-    genero: GeneroCreate, db: AsyncSession = Depends(get_session), current_user=Depends(get_current_user)
-):
+async def create_genero(genero: GeneroCreate, db: Session, current_user: CurrentUser):
     # verificar se o gênero já existe
     genero_db = await db.scalar(select(GeneroModel).where((func.lower(GeneroModel.genero)) == genero.genero.lower()))
     # retorna erro se já existir
@@ -37,7 +40,7 @@ async def create_genero(
 # Listar todos os gêneros
 @router.get('/', status_code=HTTPStatus.OK, response_model=GeneroList)
 async def read_generos(
-    db: AsyncSession = Depends(get_session),
+    db: Session,
 ):
     generos = await db.scalars(select(GeneroModel))
     return {'generos': generos.all()}
@@ -45,12 +48,7 @@ async def read_generos(
 
 # Alterar um gênero
 @router.put('/{genero_id}', status_code=HTTPStatus.OK, response_model=GeneroSchema)
-async def update_genero(
-    genero_id: int,
-    genero: GeneroCreate,
-    db: AsyncSession = Depends(get_session),
-    current_user=Depends(get_current_user),
-):
+async def update_genero(genero_id: int, genero: GeneroCreate, db: Session, current_user: CurrentUser):
     # verificar se o gênero existe
     genero_db = await db.scalar(select(GeneroModel).where(GeneroModel.id == genero_id))
     if not genero_db:
@@ -72,9 +70,7 @@ async def update_genero(
 
 # Deletar um gênero
 @router.delete('/{genero_id}', status_code=HTTPStatus.OK, response_model=MessageSchema)
-async def delete_genero(
-    genero_id: int, db: AsyncSession = Depends(get_session), current_user=Depends(get_current_user)
-):
+async def delete_genero(genero_id: int, db: Session, current_user: CurrentUser):
     # verificar se o gênero existe
     genero_db = await db.scalar(select(GeneroModel).where(GeneroModel.id == genero_id))
     if not genero_db:

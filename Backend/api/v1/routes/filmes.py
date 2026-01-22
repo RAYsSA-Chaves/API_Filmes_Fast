@@ -1,6 +1,9 @@
 # Lógica da API para requisições de filmes
 
 from http import HTTPStatus
+from typing import (
+    Annotated,
+)  # permite criar uma anotação para deixar definido um tipo reutilizável e os seus metadados (infos dele); não executa código, apenas fornece uma info sobre o tipo, por exemplo: de onde obter o seu valor
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
@@ -13,17 +16,22 @@ from core.security import (
 )  # vai impedir usuários não logados de acessar os endpoints (uso como dependência) -> coloca cadeado lá no Swagger
 from models.filme_model import MovieModel
 from models.genero_model import GeneroModel
+from models.user_model import UserModel
 from schemas.filme_schema import MessageSchema, MovieList, MoviePublic, MovieSchema
 
 # Criando o roteador
 router = APIRouter(prefix='/filmes', tags=['Filmes'])  # tags -> vai agrupar na documentação automática do FastAPI
 
+Session = Annotated[
+    AsyncSession, Depends(get_session)
+]  # traduzindo: a variável Session é uma AsyncSession que o FastAPI deve obter usando get_session
+
+CurrentUser = Annotated[UserModel, Depends(get_current_user)]
+
 
 # Salvar um novo filme
 @router.post('/', status_code=HTTPStatus.CREATED, response_model=MoviePublic)
-async def create_movie(
-    filme: MovieSchema, db: AsyncSession = Depends(get_session), current_user=Depends(get_current_user)
-):
+async def create_movie(filme: MovieSchema, db: Session, current_user: CurrentUser):
     # verificar se filme já existe
     filme_db = await db.scalar(
         select(MovieModel).where(
@@ -39,7 +47,7 @@ async def create_movie(
         titulo=filme.titulo,
         duracao=filme.duracao,
         ano=filme.ano,
-        capa=filme.capa,
+        capa=str(filme.capa),
         avaliacao_interna=filme.avaliacao_interna,
         generos=[],
     )
@@ -64,9 +72,9 @@ async def create_movie(
 # Listar todos os filmes
 @router.get('/', status_code=HTTPStatus.OK, response_model=MovieList)
 async def read_movies(
+    db: Session,
     page: int = Query(1, ge=1, description='Número da página'),
     per_page: int = Query(10, ge=1, description='Número de filmes por página'),
-    db: AsyncSession = Depends(get_session),
 ):
     filmes = await db.scalars(
         select(MovieModel)
@@ -78,12 +86,12 @@ async def read_movies(
 
     # limit = retorna n registros no máximo
     # offset = pula os n primeiros registros; define a partir de qual ele começa a pegar
-    # query = query string(valor padrão caso não seja passado nada, greater or equal to 1)
+    # query = query string (valor padrão caso não seja passado nada, greater or equal to 1)
 
 
 # Acessar um filme específico
 @router.get('/{filme_id}', status_code=HTTPStatus.OK, response_model=MoviePublic)
-async def read_one_movie(filme_id: int, db: AsyncSession = Depends(get_session)):
+async def read_one_movie(filme_id: int, db: Session):
     # verificar se filme existe
     filme_db = await db.scalar(
         select(MovieModel).where(MovieModel.id == filme_id).options(selectinload(MovieModel.generos))
@@ -95,9 +103,7 @@ async def read_one_movie(filme_id: int, db: AsyncSession = Depends(get_session))
 
 # Alterar um filme
 @router.put('/{filme_id}', status_code=HTTPStatus.ACCEPTED, response_model=MoviePublic)
-async def update_movie(
-    filme_id: int, filme: MovieSchema, db: AsyncSession = Depends(get_session), current_user=Depends(get_current_user)
-):
+async def update_movie(filme_id: int, filme: MovieSchema, db: Session, current_user: CurrentUser):
     # verificar se filme existe
     filme_db = await db.scalar(
         select(MovieModel).where(MovieModel.id == filme_id).options(selectinload(MovieModel.generos))
@@ -126,7 +132,7 @@ async def update_movie(
     filme_db.titulo = filme.titulo
     filme_db.duracao = filme.duracao
     filme_db.ano = filme.ano
-    filme_db.capa = filme.capa
+    filme_db.capa = str(filme.capa)
     filme_db.avaliacao_interna = filme.avaliacao_interna
     filme_db.generos = []
 
@@ -147,7 +153,7 @@ async def update_movie(
 
 # Deletar um filme
 @router.delete('/{filme_id}', status_code=HTTPStatus.OK, response_model=MessageSchema)
-async def delete_filme(filme_id: int, db: AsyncSession = Depends(get_session), current_user=Depends(get_current_user)):
+async def delete_filme(filme_id: int, db: Session, current_user: CurrentUser):
     # verificar se filme existe
     filme_db = await db.scalar(select(MovieModel).where(MovieModel.id == filme_id))
     if not filme_db:

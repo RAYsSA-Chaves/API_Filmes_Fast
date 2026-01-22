@@ -9,7 +9,7 @@ from .genero_schema import GeneroSchema
 
 # ---- Tipos personalizados ----
 
-# String com restrição para tempo de duraçãom (aceita "1h" ou "30min" ou "1h30min")
+# String com restrição para tempo de duraçãom (aceita '1h' ou '30min' ou '1h30min')
 TempoStr = Annotated[str, StringConstraints(pattern=r'^(\d+h)?(\d+min)?$')]
 
 # Float para nota do filme (máximo 10)
@@ -27,8 +27,11 @@ class MessageSchema(BaseModel):
 # para post de filme
 class MovieSchema(BaseModel):
     titulo: str
-    duracao: TempoStr
-    ano: int
+    duracao: TempoStr = Field(
+        example='1h30min',
+        description='Duração do filme (ex: 1h30min, 45min)'
+    )  # infos para o Swagger
+    ano: int = Field(example=2020)
     capa: AnyUrl
     avaliacao_interna: NotaMax
     generos: List[int]  # lista de IDs dos gêneros
@@ -44,7 +47,7 @@ class MoviePublic(BaseModel):
     generos: List[GeneroSchema]
     model_config = {'from_attributes': True}
 
-    # model_config -> o FastAPI tenta acessar os campos como se fosse obj["id"], mas o SQLAlchemy trabalha com obj.id, isso gera erro, ele não consegue tranformar em json; essa configuração informa ao Pydantic que o modelo pode ser criado a partir de atributos de um objeto
+    # model_config -> o FastAPI tenta acessar os campos como se fosse obj['id'], mas o SQLAlchemy trabalha com obj.id, isso gera erro, ele não consegue tranformar em json; essa configuração informa ao Pydantic que o modelo pode ser criado a partir de atributos de um objeto
     # “Pydantic, quando você receber um objeto (em vez de um dict), acesse seus atributos com ponto (obj.atributo) e monte o schema a partir disso.”
 
 

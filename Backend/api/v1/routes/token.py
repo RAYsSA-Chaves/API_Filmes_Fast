@@ -18,6 +18,7 @@ router = APIRouter(prefix='/token', tags=['Token'])
 
 Session = Annotated[AsyncSession, Depends(get_session)]
 OAuth2Form = Annotated[OAuth2PasswordRequestForm, Depends()]
+CurrentUser = Annotated[UserModel, Depends(get_current_user)]
 
 
 # Validar credenciais e gerar token (login)
@@ -44,3 +45,12 @@ async def login_for_access_token(formData: OAuth2Form, db: Session):
     access_token = create_access_token({'sub': user_db.email})
 
     return {'access_token': access_token, 'token_type': 'bearer'}
+
+@router.post(
+    '/refresh',
+    response_model=Token,
+    summary='Refresh de Token',
+)
+async def refresh_access_token(user: CurrentUser):
+    new_access_token = create_access_token({'sub': user.email})
+    return {'access_token': new_access_token, 'token_type': 'bearer'}

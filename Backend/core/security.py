@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone  # timedelta -> armazena quan
 
 from jwt import (
     DecodeError,
+    ExpiredSignatureError,
     decode,
     encode,
 )  # encode -> transforma dados em token (formato seguro); decode -> converte de volta para os dados originais
@@ -75,6 +76,10 @@ async def get_current_user(db: AsyncSession = Depends(get_session), token: str =
             raise credentials_exception
 
     except DecodeError:
+        raise credentials_exception
+
+    # trata erro de token expirado
+    except ExpiredSignatureError:
         raise credentials_exception
 
     # busca se usuário existe no banco

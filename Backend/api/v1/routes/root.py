@@ -11,5 +11,5 @@ router = APIRouter()
 
 
 @router.get('/', status_code=HTTPStatus.OK, response_model=MessageSchema)
-def read_root():
+async def read_root():
     return {'message': 'Olá mundo! Estou funcionando!'}

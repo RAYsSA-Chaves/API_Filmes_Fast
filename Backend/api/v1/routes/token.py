@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.deps import get_session
-from core.security import create_access_token, verify_password
+from core.security import create_access_token, get_current_user, verify_password
 from models.user_model import UserModel
 from schemas.token_schema import Token
 
@@ -45,6 +45,7 @@ async def login_for_access_token(formData: OAuth2Form, db: Session):
     access_token = create_access_token({'sub': user_db.email})
 
     return {'access_token': access_token, 'token_type': 'bearer'}
+
 
 @router.post(
     '/refresh',

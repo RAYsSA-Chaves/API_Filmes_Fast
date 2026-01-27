@@ -52,6 +52,12 @@ async def create_movie(filme: MovieSchema, db: Session, current_user: CurrentUse
         generos=[],
     )
 
+    db.add(novo_filme) 
+    await db.commit()
+    await db.refresh(
+        novo_filme
+    )  # atualiza com as coisas que estão no banco (pega id e created_at, que não passados pelo usuário)
+
     # pega os generos e verifica se existem
     for genero_id in filme.generos:
         genero = await db.get(GeneroModel, genero_id)
@@ -59,13 +65,11 @@ async def create_movie(filme: MovieSchema, db: Session, current_user: CurrentUse
             raise HTTPException(
                 status_code=HTTPStatus.NOT_FOUND, detail=f'Deu ruim! O gênero {genero_id} não existe no sistema!'
             )
-        novo_filme.generos.append(genero)
+        novo_filme.generos.append(genero)  # adiciona automaticamente na intermediária, porque filmes tem relationship com gêneros definida
 
-    db.add(novo_filme)  # adiciona automaticamente na intermediária, porque filmes tem relationship com gêneros definida
     await db.commit()
-    await db.refresh(
-        novo_filme, attribute_names=['generos']
-    )  # atualiza com as coisas que estão no banco (pega id e created_at, que não passados pelo usuário e os relacionamentos da intermediária)
+    await db.refresh(novo_filme, attribute_names=['generos'])
+
     return novo_filme
 
 

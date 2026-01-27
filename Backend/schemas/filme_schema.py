@@ -28,8 +28,7 @@ class MessageSchema(BaseModel):
 class MovieSchema(BaseModel):
     titulo: str
     duracao: TempoStr = Field(
-        example='1h30min',
-        description='Duração do filme (ex: 1h30min, 45min)'
+        example='1h30min', description='Duração do filme (ex: 1h30min, 45min)'
     )  # infos para o Swagger
     ano: int = Field(example=2020)
     capa: AnyUrl

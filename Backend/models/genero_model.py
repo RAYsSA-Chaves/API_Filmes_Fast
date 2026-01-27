@@ -18,5 +18,6 @@ class GeneroModel:
     filmes: Mapped[list['MovieModel']] = relationship(
         secondary='genero_filme',  # nome da tabela intermediária
         back_populates='generos',  # onde se conceta do outro lado (em MovieModel)
+        lazy='selectin',
         init=False,  # não é o usuário que passa
     )

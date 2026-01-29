@@ -2,8 +2,8 @@
 
 from pydantic import BaseModel
 
-# ---- Schemas ----
 
+# ---- Schemas ----
 
 # para post de gênero
 class GeneroCreate(BaseModel):

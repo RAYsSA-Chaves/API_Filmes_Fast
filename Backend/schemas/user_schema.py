@@ -8,8 +8,8 @@ from pydantic import BaseModel, EmailStr, Field
 
 SenhaStr = Annotated[str, Field(min_length=6)]
 
-# ---- Schemas ----
 
+# ---- Schemas ----
 
 # para cadastro
 class UserCreate(BaseModel):

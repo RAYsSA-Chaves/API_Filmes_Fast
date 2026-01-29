@@ -2,6 +2,9 @@
 
 from datetime import datetime
 
+from enum import Enum
+
+from sqlalchemy import ForeignKey
 from sqlalchemy import DateTime, String, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -10,6 +13,16 @@ from .genero_model import GeneroModel
 
 # Mapped -> mapeia o tipo mais próximo do banco (ex: str aqui = varchar lá)
 # mapped_column -> entende automaticamente o contexto da classe e faz algumas configurações de mapeamento para dizer a coluna deve ser do tipo anotado em Mapped[...]
+
+
+# opções de classificações indicativas
+class IndicativeRating(str, Enum):
+    L = 'Livre para todos os públicos'
+    A10 = 'Não recomendado para menores de 10 anos'
+    A12 = 'Não recomendado para menores de 12 anos'
+    A14 = 'Não recomendado para menores de 14 anos'
+    A16 = 'Não recomendado para menores de 16 anos'
+    A18 = 'Não recomendado para menores de 18 anos '
 
 
 @table_registry.mapped_as_dataclass
@@ -24,11 +37,13 @@ class MovieModel:
     ano: Mapped[int]
     capa: Mapped[str] = mapped_column(String(255), unique=True)
     avaliacao_interna: Mapped[float]
+    classificacao: Mapped[IndicativeRating]
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=text('CURRENT_TIMESTAMP'), init=False
     )  # o banco guarda data do INSERT automaticamente, não é o usuário nem o python que preenche isso
     generos: Mapped[list['GeneroModel']] = relationship(
         secondary='genero_filme',  # nome da tabela intermediária
         back_populates='filmes',  # onde se conceta do outro lado (em GeneroModel)
-        lazy='selectin',  # só tava dando um erro maluco e isso resolveu
+        lazy='selectin',  # tava dando um erro maluco e isso resolveu
     )
+    created_by = Mapped[int] = mapped_column(ForeignKey('usuarios.id'))

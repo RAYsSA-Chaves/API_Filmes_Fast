@@ -41,6 +41,26 @@ async def create_movie(filme: MovieSchema, db: Session, current_user: CurrentUse
     # retorna erro se já existir
     if filme_db:
         raise HTTPException(status_code=HTTPStatus.CONFLICT, detail='Esse filme já existe!')
+    
+    # verificar se capa já foi usada
+    filme_capa = await db.scalar(
+        select(MovieModel).where(
+            (MovieModel.capa == filme.capa)
+        )
+    )
+    # retorna erro se já existir
+    if filme_capa:
+        raise HTTPException(status_code=HTTPStatus.CONFLICT, detail='Essa capa já foi usada para outro filme!')
+    
+    # pega os generos e verifica se existem
+    generos_db = []
+    for genero_id in filme.generos:
+        genero = await db.get(GeneroModel, genero_id)
+        if not genero:
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND, detail=f'Deu ruim! O gênero {genero_id} não existe no sistema!'
+            )
+        generos_db.append(genero)
 
     # converte de objeto python para modelo do banco e salva
     novo_filme = MovieModel(
@@ -49,26 +69,14 @@ async def create_movie(filme: MovieSchema, db: Session, current_user: CurrentUse
         ano=filme.ano,
         capa=str(filme.capa),
         avaliacao_interna=filme.avaliacao_interna,
-        generos=[],
+        classificacao=filme.classificacao,
+        generos=generos_db,  # adiciona automaticamente na intermediária, porque filmes tem relationship com gêneros definida
+        created_by=current_user.id,
     )
 
     db.add(novo_filme) 
     await db.commit()
-    await db.refresh(
-        novo_filme
-    )  # atualiza com as coisas que estão no banco (pega id e created_at, que não passados pelo usuário)
-
-    # pega os generos e verifica se existem
-    for genero_id in filme.generos:
-        genero = await db.get(GeneroModel, genero_id)
-        if not genero:
-            raise HTTPException(
-                status_code=HTTPStatus.NOT_FOUND, detail=f'Deu ruim! O gênero {genero_id} não existe no sistema!'
-            )
-        novo_filme.generos.append(genero)  # adiciona automaticamente na intermediária, porque filmes tem relationship com gêneros definida
-
-    await db.commit()
-    await db.refresh(novo_filme, attribute_names=['generos'])
+    await db.refresh(novo_filme, attribute_names=['generos'])   # atualiza com as coisas que estão no banco (pega id e created_at, que não passados pelo usuário)
 
     return novo_filme
 
@@ -125,6 +133,16 @@ async def update_movie(filme_id: int, filme: MovieSchema, db: Session, current_u
     )
     if filme_duplicado:
         raise HTTPException(HTTPStatus.CONFLICT, detail='Esse filme já existe!')
+    
+    # verificar capa duplicada
+    capa_duplicada = await db.scalar(
+        select(MovieModel).where(
+            (MovieModel.capa == filme.capa) 
+            & (MovieModel.id != filme_id)
+        )
+    )
+    if capa_duplicada:
+        raise HTTPException(HTTPStatus.CONFLICT, detail='Essa capa já foi usada para outro filme!')
 
     # verificar se foram enviados gêneros
     if not filme.generos or len(filme.generos) == 0:
@@ -138,6 +156,7 @@ async def update_movie(filme_id: int, filme: MovieSchema, db: Session, current_u
     filme_db.ano = filme.ano
     filme_db.capa = str(filme.capa)
     filme_db.avaliacao_interna = filme.avaliacao_interna
+    filme_db.classificacao = filme.classificacao
     filme_db.generos = []
 
     # pega os generos e verifica se existem

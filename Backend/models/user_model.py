@@ -1,7 +1,9 @@
 # Modelo para tabela de usuários no banco de dados
 
 from sqlalchemy import String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from .filme_model import MovieModel
 
 from . import table_registry
 
@@ -13,3 +15,8 @@ class UserModel:
     id: Mapped[int] = mapped_column(primary_key=True, init=False)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     senha: Mapped[str] = mapped_column(String(255), nullable=False)
+    filmes_cadastrados: Mapped[list['MovieModel']] = relationship(
+        init=False,  # não é passado ao criar um novo user
+        cascade='all, delete-orphan',
+        lazy='selectin',
+    )

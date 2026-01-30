@@ -18,9 +18,15 @@ class UserCreate(BaseModel):
     senha: SenhaStr
 
 
+# para patch
+class UserUpdate(BaseModel):
+    email: EmailStr | None = None
+    senha: SenhaStr | None = None
+
+
 # retirando infos sigilosas da resposta das requisições (senha)
 class UserPublic(BaseModel):
     id: int
     email: EmailStr
-    
+
     model_config = {'from_attributes': True}

@@ -17,7 +17,7 @@ from core.security import (
 from models.filme_model import MovieModel
 from models.genero_model import GeneroModel
 from models.user_model import UserModel
-from schemas.filme_schema import MessageSchema, MovieList, MoviePublic, MovieSchema
+from schemas.filme_schema import MessageSchema, MovieList, MoviePublic, MovieSchema, FilterMovie, MovieUpdate
 
 # Criando o roteador
 router = APIRouter(prefix='/filmes', tags=['Filmes'])  # tags -> vai agrupar na documentação automática do FastAPI
@@ -83,23 +83,40 @@ async def create_movie(filme: MovieSchema, db: Session, current_user: CurrentUse
 @router.get('/', status_code=HTTPStatus.OK, response_model=MovieList)
 async def read_movies(
     db: Session,
-    page: int = Query(1, ge=1, description='Número da página'),
-    per_page: int = Query(10, ge=1, description='Número de filmes por página'),
+    filmes_filter: Annotated[FilterMovie, Query()],
 ):
+    
+    # filtrando
+    query = select(MovieModel)
+    
+    if filmes_filter.titulo:
+        query = query.filter(MovieModel.titulo.contains(filmes_filter.titulo))
+
+    if filmes_filter.ano:
+        query = query.filter(MovieModel.ano == filmes_filter.ano)
+
+    if filmes_filter.genero:
+        query = query.join(MovieModel.generos).where(
+            GeneroModel.id.in_(filmes_filter.genero)
+        )
+
+    # explicando o filtro dos gêneros
+    # filme já foi acessado, agora preciso dos dados relacionados -> ORM resolve sozinho com selectionload
+    # quais filmes devo trazer (depende de filtros)? -> ORM não resolve sozinho porque ele ainda não tem o filme, precisa de JOIN explícito
+
     filmes = await db.scalars(
-        select(MovieModel)
+        query
         .options(
-            selectinload(MovieModel.generos), 
-            selectinload(MovieModel.usuario)
+            selectinload(MovieModel.generos), selectinload(MovieModel.usuario)
         )  # força carregar os gêneros e usuarios
-        .limit(per_page)
-        .offset((page - 1) * per_page)
+        .limit(filmes_filter.limit)
+        .offset((filmes_filter.page - 1) * filmes_filter.limit)
     )
     return {'filmes': filmes.all()}
 
     # limit = retorna n registros no máximo
     # offset = pula os n primeiros registros; define a partir de qual ele começa a pegar
-    # query = query string (valor padrão caso não seja passado nada, greater or equal to 1)
+    # Query = indica que vai vir via parâmetros na url
 
 
 # Acessar um filme específico
@@ -107,7 +124,12 @@ async def read_movies(
 async def read_one_movie(filme_id: int, db: Session):
     # verificar se filme existe
     filme_db = await db.scalar(
-        select(MovieModel).where(MovieModel.id == filme_id).options(selectinload(MovieModel.generos))
+        select(MovieModel)
+        .where(MovieModel.id == filme_id)
+        .options(
+            selectinload(MovieModel.generos),
+            selectinload(MovieModel.usuario)
+        )
     )
     if not filme_db:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Deu ruim! Não achei o filme.')
@@ -115,15 +137,25 @@ async def read_one_movie(filme_id: int, db: Session):
 
 
 # Listar filmes cadastrados por um usuário
-@router.get('/{user_id}', status_code=HTTPStatus.OK, response_model=MoviePublic)
+@router.get('/usuario/{user_id}', status_code=HTTPStatus.OK, response_model=MovieList)
 async def read_user_movies(user_id: int, db: Session):
-    # verificar se existem filmes cadastrados pelo usuário desejado
-    filmes_db = await db.scalar(
-        select(MovieModel).where(MovieModel.usuario.id == user_id).options(selectinload(MovieModel.generos))
+    # verificar se existem filmes cadastrados pelo usuário
+    filmes_db = await db.scalars(
+        select(MovieModel)
+        .where(MovieModel.created_by == user_id)
+        .options(
+            selectinload(MovieModel.generos),
+        )
     )
-    if not filmes_db:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Não encontrei filmes cadastrados por esse usuário.')
-    return filmes_db
+
+    lista = filmes_db.all(),
+
+    if not lista:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail='Não encontrei filmes cadastrados por esse usuário.'
+        )
+    
+    return {'filmes': lista}
 
 
 # Alterar um filme
@@ -177,6 +209,64 @@ async def update_movie(filme_id: int, filme: MovieSchema, db: Session, current_u
                 status_code=HTTPStatus.NOT_FOUND, detail=f'Deu ruim! O gênero {genero_id} não existe no sistema!'
             )
         filme_db.generos.append(genero)
+
+    # salva as alterações
+    await db.commit()
+    await db.refresh(filme_db)
+    return filme_db
+
+
+# Alterar filme sem precisar passar todos os dados
+@router.patch('/{filme_id}', status_code=HTTPStatus.ACCEPTED, response_model=MoviePublic)
+async def patch_movie(filme_id: int, filme: MovieUpdate, db: Session, current_user: CurrentUser):
+    # verificar se filme existe
+    filme_db = await db.scalar(
+        select(MovieModel).where(MovieModel.id == filme_id).options(selectinload(MovieModel.generos))
+    )
+    if not filme_db:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Filme não encontrado!')
+
+    # verificar se vai gerar filme duplicado
+    if filme.titulo is not None or filme.ano is not None:
+        filme_duplicado = await db.scalar(
+            select(MovieModel).where(
+                (func.lower(MovieModel.titulo) == (filme.titulo.lower()))
+                & (MovieModel.ano == filme.ano)
+                & (MovieModel.id != filme_id)
+            )
+        )
+        if filme_duplicado:
+            raise HTTPException(HTTPStatus.CONFLICT, detail='Esse filme já existe!')
+
+    # verificar capa duplicada
+    if filme.capa is not None:
+        capa_duplicada = await db.scalar(
+            select(MovieModel).where((MovieModel.capa == filme.capa) & (MovieModel.id != filme_id))
+        )
+        if capa_duplicada:
+            raise HTTPException(HTTPStatus.CONFLICT, detail='Essa capa já foi usada para outro filme!')
+
+    # pega os generos e verifica se existem
+    if filme.generos is not None:
+        if len(filme.generos) == 0:
+            raise HTTPException(
+                status_code=HTTPStatus.BAD_REQUEST,
+                detail='A lista de gêneros não pode ser vazia.'
+            )
+        
+        filme_db.generos = []
+    
+        for genero_id in filme.generos:
+            genero = await db.get(GeneroModel, genero_id)
+            if not genero:
+                raise HTTPException(
+                    status_code=HTTPStatus.NOT_FOUND, detail=f'Deu ruim! O gênero {genero_id} não existe no sistema!'
+                )
+            filme_db.generos.append(genero)
+
+    # excluir todos os campos que não foram passados e atualizar o que foi
+    for key, value in filme.model_dump(exclude_unset=True).items():
+        setattr(filme_db, key, value)
 
     # salva as alterações
     await db.commit()

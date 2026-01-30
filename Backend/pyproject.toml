@@ -24,7 +24,7 @@ target-version = 'py313'
 # tipos de regras que o ruff vai checar
 [tool.ruff.lint]
 preview = true # mostra o que está errado
-select = ['I', 'F', 'E', 'W', 'PL', 'FAST']
+select = ['I', 'F', 'E', 'W', 'PL', 'FAST', 'N']
 
 # alterações na formatação do código
 [tool.ruff.format]

@@ -1,13 +1,16 @@
 # Documentação dos modelos dos dados dos filmes para validação
 
-# Annotated = permite anexar informações extras a um tipo
-from typing import Annotated, List
 
-from pydantic import AnyUrl, BaseModel, Field, StringConstraints, EmailStr
+from typing import Annotated, List  # Annotated = permite anexar informações extras a um tipo
+
+from pydantic import AnyUrl, BaseModel, EmailStr, Field, StringConstraints
+
+from datetime import datetime
+
+from models.filme_model import IndicativeRating
 
 from .genero_schema import GeneroSchema
 
-from models.filme_model import IndicativeRating
 
 # ---- Tipos personalizados ----
 
@@ -26,11 +29,22 @@ class MessageSchema(BaseModel):
     message: str
 
 
-# para pegar email da tabela de usuário
+# para pegar email do usuário
 class UserEmail(BaseModel):
     email: EmailStr
 
     model_config = {'from_attributes': True}
+
+
+# filtros
+class FilterPage(BaseModel):
+    page: int = Field(1, ge=1, description='Número da página')
+    limit: int = Field(10, ge=1, description='Número de filmes por página')
+
+class FilterMovie(FilterPage):
+    titulo: str | None = Field(default=None, max_length=20)
+    ano: int | None = None
+    genero: List[int] | None = None
 
 
 # para post de filme
@@ -55,20 +69,32 @@ class MoviePublic(BaseModel):
     capa: AnyUrl
     generos: List[GeneroSchema]
     classificacao: IndicativeRating
-    created_by: UserEmail
+    usuario: UserEmail
+    created_at: datetime
+    updated_at: datetime
 
     model_config = {'from_attributes': True}
-
 
     # model_config -> o FastAPI tenta acessar os campos como se fosse obj['id'], mas o SQLAlchemy trabalha com obj.id, isso gera erro, ele não consegue tranformar em json; essa configuração informa ao Pydantic que o modelo pode ser criado a partir de atributos de um objeto
     # “Pydantic, quando você receber um objeto (em vez de um dict), acesse seus atributos com ponto (obj.atributo) e monte o schema a partir disso.”
 
 
-# para salvar no fake db
-# class MovieDB(MovieSchema):
-#     id: int
-
-
 # para get de todos os filmes
 class MovieList(BaseModel):
     filmes: list[MoviePublic]
+
+
+# para patch
+class MovieUpdate(BaseModel):
+    titulo: str | None = None
+    duracao: TempoStr | None = None
+    ano: int | None = None
+    capa: AnyUrl | None = None
+    avaliacao_interna: NotaMax | None = None
+    generos: List[int] | None = None
+    classificacao: IndicativeRating | None = None
+
+
+# para salvar no fake db
+# class MovieDB(MovieSchema):
+#     id: int

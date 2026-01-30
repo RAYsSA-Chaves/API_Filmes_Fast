@@ -1,11 +1,9 @@
 # Modelo para tabela de filmes no banco de dados (cada classe = uma tabela no banco)
 
 from datetime import datetime
-
 from enum import Enum
 
-from sqlalchemy import ForeignKey
-from sqlalchemy import DateTime, String, text
+from sqlalchemy import DateTime, ForeignKey, String, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from . import table_registry
@@ -40,14 +38,23 @@ class MovieModel:
     avaliacao_interna: Mapped[float]
     classificacao: Mapped[IndicativeRating]
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, server_default=text('CURRENT_TIMESTAMP'), init=False
+        DateTime, 
+        server_default=text('CURRENT_TIMESTAMP'), 
+        init=False
     )  # o banco guarda data do INSERT automaticamente, não é o usuário nem o python que preenche isso
+    created_by: Mapped[int] = mapped_column(ForeignKey('usuarios.id'))
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, 
+        server_default=text('CURRENT_TIMESTAMP'), 
+        server_onupdate=text('CURRENT_TIMESTAMP'),
+        init=False, 
+    )
+
     generos: Mapped[list['GeneroModel']] = relationship(
         secondary='genero_filme',  # nome da tabela intermediária
         back_populates='filmes',  # onde se conceta do outro lado (em GeneroModel)
         lazy='selectin',  # tava dando um erro maluco e isso resolveu
     )
-    created_by: Mapped[int] = mapped_column(ForeignKey('usuarios.id'))
     usuario: Mapped['UserModel'] = relationship(
         lazy='selectin',
         back_populates='filmes_cadastrados',

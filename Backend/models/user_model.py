@@ -3,9 +3,8 @@
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from .filme_model import MovieModel
-
 from . import table_registry
+from .filme_model import MovieModel
 
 
 @table_registry.mapped_as_dataclass

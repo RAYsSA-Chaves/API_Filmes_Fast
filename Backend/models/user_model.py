@@ -16,7 +16,6 @@ class UserModel:
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     senha: Mapped[str] = mapped_column(String(255), nullable=False)
     filmes_cadastrados: Mapped[list['MovieModel']] = relationship(
-        init=False,  # não é passado ao criar um novo user
-        cascade='all, delete-orphan',
-        lazy='selectin',
+        back_populates='usuario',
+        init=False,
     )

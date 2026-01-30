@@ -11,6 +11,7 @@ SenhaStr = Annotated[str, Field(min_length=6)]
 
 # ---- Schemas ----
 
+
 # para cadastro
 class UserCreate(BaseModel):
     email: EmailStr
@@ -21,5 +22,5 @@ class UserCreate(BaseModel):
 class UserPublic(BaseModel):
     id: int
     email: EmailStr
-
+    
     model_config = {'from_attributes': True}

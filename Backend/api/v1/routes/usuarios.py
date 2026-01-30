@@ -34,6 +34,26 @@ async def create_user(user: UserCreate, db: Session):
     await db.refresh(novo_usuario)
     return novo_usuario
 
+# Acessar suas próprias infos
+@router.get('/{user_id}', status_code=HTTPStatus.OK, response_model=UserPublic)
+async def read_logged_user(
+    user_id: int, 
+    db: Session,
+    current_user: CurrentUser,
+):
+    # verificar se usuário existe
+    user_db = await db.scalar(
+        select(UserModel).where(UserModel.id == user_id)
+    )
+    if not user_db:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Usuário não encontrado :(')
+    
+    # verificar se quer acessar as infos de outros usuários
+    if current_user.id != user_id:
+        raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail='Permissões insuficientes!')
+    
+    return user_db
+
 
 # Alterar dados de um cadastro
 @router.put('/{user_id}', status_code=HTTPStatus.ACCEPTED, response_model=UserPublic)

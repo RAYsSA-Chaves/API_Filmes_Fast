@@ -41,17 +41,13 @@ async def create_movie(filme: MovieSchema, db: Session, current_user: CurrentUse
     # retorna erro se já existir
     if filme_db:
         raise HTTPException(status_code=HTTPStatus.CONFLICT, detail='Esse filme já existe!')
-    
+
     # verificar se capa já foi usada
-    filme_capa = await db.scalar(
-        select(MovieModel).where(
-            (MovieModel.capa == filme.capa)
-        )
-    )
+    filme_capa = await db.scalar(select(MovieModel).where((MovieModel.capa == filme.capa)))
     # retorna erro se já existir
     if filme_capa:
         raise HTTPException(status_code=HTTPStatus.CONFLICT, detail='Essa capa já foi usada para outro filme!')
-    
+
     # pega os generos e verifica se existem
     generos_db = []
     for genero_id in filme.generos:
@@ -74,9 +70,11 @@ async def create_movie(filme: MovieSchema, db: Session, current_user: CurrentUse
         created_by=current_user.id,
     )
 
-    db.add(novo_filme) 
+    db.add(novo_filme)
     await db.commit()
-    await db.refresh(novo_filme, attribute_names=['generos'])   # atualiza com as coisas que estão no banco (pega id e created_at, que não passados pelo usuário)
+    await db.refresh(
+        novo_filme, attribute_names=['generos']
+    )  # atualiza com as coisas que estão no banco (pega id e created_at, que não passados pelo usuário)
 
     return novo_filme
 
@@ -90,7 +88,10 @@ async def read_movies(
 ):
     filmes = await db.scalars(
         select(MovieModel)
-        .options(selectinload(MovieModel.generos))  # força carregar os gêneros
+        .options(
+            selectinload(MovieModel.generos), 
+            selectinload(MovieModel.usuario)
+        )  # força carregar os gêneros e usuarios
         .limit(per_page)
         .offset((page - 1) * per_page)
     )
@@ -113,6 +114,18 @@ async def read_one_movie(filme_id: int, db: Session):
     return filme_db
 
 
+# Listar filmes cadastrados por um usuário
+@router.get('/{user_id}', status_code=HTTPStatus.OK, response_model=MoviePublic)
+async def read_user_movies(user_id: int, db: Session):
+    # verificar se existem filmes cadastrados pelo usuário desejado
+    filmes_db = await db.scalar(
+        select(MovieModel).where(MovieModel.usuario.id == user_id).options(selectinload(MovieModel.generos))
+    )
+    if not filmes_db:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Não encontrei filmes cadastrados por esse usuário.')
+    return filmes_db
+
+
 # Alterar um filme
 @router.put('/{filme_id}', status_code=HTTPStatus.ACCEPTED, response_model=MoviePublic)
 async def update_movie(filme_id: int, filme: MovieSchema, db: Session, current_user: CurrentUser):
@@ -133,13 +146,10 @@ async def update_movie(filme_id: int, filme: MovieSchema, db: Session, current_u
     )
     if filme_duplicado:
         raise HTTPException(HTTPStatus.CONFLICT, detail='Esse filme já existe!')
-    
+
     # verificar capa duplicada
     capa_duplicada = await db.scalar(
-        select(MovieModel).where(
-            (MovieModel.capa == filme.capa) 
-            & (MovieModel.id != filme_id)
-        )
+        select(MovieModel).where((MovieModel.capa == filme.capa) & (MovieModel.id != filme_id))
     )
     if capa_duplicada:
         raise HTTPException(HTTPStatus.CONFLICT, detail='Essa capa já foi usada para outro filme!')

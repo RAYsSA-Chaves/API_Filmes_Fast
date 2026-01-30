@@ -10,6 +10,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from . import table_registry
 from .genero_model import GeneroModel
+from .user_model import UserModel
 
 # Mapped -> mapeia o tipo mais próximo do banco (ex: str aqui = varchar lá)
 # mapped_column -> entende automaticamente o contexto da classe e faz algumas configurações de mapeamento para dizer a coluna deve ser do tipo anotado em Mapped[...]
@@ -46,4 +47,8 @@ class MovieModel:
         back_populates='filmes',  # onde se conceta do outro lado (em GeneroModel)
         lazy='selectin',  # tava dando um erro maluco e isso resolveu
     )
-    created_by = Mapped[int] = mapped_column(ForeignKey('usuarios.id'))
+    created_by: Mapped[int] = mapped_column(ForeignKey('usuarios.id'))
+    usuario: Mapped['UserModel'] = relationship(
+        lazy='selectin',
+        back_populates='filmes_cadastrados',
+    )

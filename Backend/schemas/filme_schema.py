@@ -3,13 +3,15 @@
 
 from typing import Annotated, List  # Annotated = permite anexar informações extras a um tipo
 
-from pydantic import AnyUrl, BaseModel, EmailStr, Field, StringConstraints
+from pydantic import AnyUrl, BaseModel, EmailStr, Field, StringConstraints, field_serializer
 
 from datetime import datetime
 
 from models.filme_model import IndicativeRating
 
 from .genero_schema import GeneroSchema
+
+from .user_schema import UserEmail
 
 
 # ---- Tipos personalizados ----
@@ -29,17 +31,11 @@ class MessageSchema(BaseModel):
     message: str
 
 
-# para pegar email do usuário
-class UserEmail(BaseModel):
-    email: EmailStr
-
-    model_config = {'from_attributes': True}
-
-
 # filtros
 class FilterPage(BaseModel):
     page: int = Field(1, ge=1, description='Número da página')
     limit: int = Field(10, ge=1, description='Número de filmes por página')
+
 
 class FilterMovie(FilterPage):
     titulo: str | None = Field(default=None, max_length=20)
@@ -57,7 +53,7 @@ class MovieSchema(BaseModel):
     capa: AnyUrl
     avaliacao_interna: NotaMax
     generos: List[int]  # lista de IDs dos gêneros
-    classificacao: IndicativeRating = Field(IndicativeRating.L)
+    classificacao: IndicativeRating = IndicativeRating.L
 
 
 # retirando infos sigilosas da resposta das requisições
@@ -75,6 +71,10 @@ class MoviePublic(BaseModel):
 
     model_config = {'from_attributes': True}
 
+    @field_serializer('classificacao')
+    def serialize_classificacao(self, value):
+        return value.label
+
     # model_config -> o FastAPI tenta acessar os campos como se fosse obj['id'], mas o SQLAlchemy trabalha com obj.id, isso gera erro, ele não consegue tranformar em json; essa configuração informa ao Pydantic que o modelo pode ser criado a partir de atributos de um objeto
     # “Pydantic, quando você receber um objeto (em vez de um dict), acesse seus atributos com ponto (obj.atributo) e monte o schema a partir disso.”
 
@@ -87,7 +87,10 @@ class MovieList(BaseModel):
 # para patch
 class MovieUpdate(BaseModel):
     titulo: str | None = None
-    duracao: TempoStr | None = None
+    duracao: TempoStr | None = Field(
+        default=None,
+        example='1h30min', description='Duração do filme (ex: 1h30min, 45min)'
+    )
     ano: int | None = None
     capa: AnyUrl | None = None
     avaliacao_interna: NotaMax | None = None

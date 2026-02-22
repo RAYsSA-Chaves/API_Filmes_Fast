@@ -91,29 +91,29 @@ async def patch_user(
     db: Session,
     current_user: CurrentUser,
 ):
-     # apenas o usuario pode alterar seu próprio cadastro
+    # apenas o usuario pode alterar seu próprio cadastro
     if current_user.id != user_id:
         raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail='Permissões insuficientes!')
-    
+
     # verifica se o novo email não causa conflito
+    email_duplicado = None
+
     if user.email:
         email_duplicado = await db.scalar(
-        select(UserModel)
-        .where((func.lower(UserModel.email) == user.email.lower()) & (UserModel.id != user_id))
-    )
+            select(UserModel).where((func.lower(UserModel.email) == user.email.lower()) & (UserModel.id != user_id))
+        )
     if email_duplicado:
         raise HTTPException(status_code=HTTPStatus.CONFLICT, detail='Email já cadastrado!')
-    
+
     # excluir todos os campos que não foram passados e atualizar o que foi
     for key, value in user.model_dump(exclude_unset=True).items():
-        if user.senha:
-            user.senha = get_password_hash(user.senha)
+        if key == 'senha':
+            value = get_password_hash(user.senha)
         setattr(current_user, key, value)
 
     await db.commit()
     await db.refresh(current_user)
     return current_user
-
 
 
 # Excluir um usuário

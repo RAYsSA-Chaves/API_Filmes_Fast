@@ -30,3 +30,10 @@ class UserPublic(BaseModel):
     email: EmailStr
 
     model_config = {'from_attributes': True}
+
+
+# pegar email do usuário
+class UserEmail(BaseModel):
+    email: EmailStr
+
+    model_config = {'from_attributes': True}

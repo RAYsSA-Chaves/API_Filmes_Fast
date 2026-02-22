@@ -16,12 +16,25 @@ from .user_model import UserModel
 
 # opções de classificações indicativas
 class IndicativeRating(str, Enum):
-    L = 'Livre para todos os públicos'
-    A10 = 'Não recomendado para menores de 10 anos'
-    A12 = 'Não recomendado para menores de 12 anos'
-    A14 = 'Não recomendado para menores de 14 anos'
-    A16 = 'Não recomendado para menores de 16 anos'
-    A18 = 'Não recomendado para menores de 18 anos '
+    # o texto menor é passado e salvo no banco e o maior é exibido para o usuário
+    L = 'L'
+    A10 = 'A10'
+    A12 = 'A12'
+    A14 = 'A14'
+    A16 = 'A16'
+    A18 = 'A18'
+
+    @property
+    def label(self) -> str:
+        labels = {
+            'L': 'Livre para todos os públicos',
+            'A10': 'Não recomendado para menores de 10 anos',
+            'A12': 'Não recomendado para menores de 12 anos',
+            'A14': 'Não recomendado para menores de 14 anos',
+            'A16': 'Não recomendado para menores de 16 anos',
+            'A18': 'Não recomendado para menores de 18 anos',
+        }
+        return labels[self.value]
 
 
 @table_registry.mapped_as_dataclass
@@ -38,16 +51,14 @@ class MovieModel:
     avaliacao_interna: Mapped[float]
     classificacao: Mapped[IndicativeRating]
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, 
-        server_default=text('CURRENT_TIMESTAMP'), 
-        init=False
+        DateTime, server_default=text('CURRENT_TIMESTAMP'), init=False
     )  # o banco guarda data do INSERT automaticamente, não é o usuário nem o python que preenche isso
     created_by: Mapped[int] = mapped_column(ForeignKey('usuarios.id'))
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, 
-        server_default=text('CURRENT_TIMESTAMP'), 
+        DateTime,
+        server_default=text('CURRENT_TIMESTAMP'),
         server_onupdate=text('CURRENT_TIMESTAMP'),
-        init=False, 
+        init=False,
     )
 
     generos: Mapped[list['GeneroModel']] = relationship(
@@ -58,4 +69,5 @@ class MovieModel:
     usuario: Mapped['UserModel'] = relationship(
         lazy='selectin',
         back_populates='filmes_cadastrados',
+        init=False
     )

@@ -27,6 +27,7 @@ from models import UserModel
 SECRET_KEY = 'my_super_secret_key'
 ALGORITHM = 'HS256'
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
+REFRESH_TOKEN_EXPIRE_DAYS = 1
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='api/v1/token')  # indica o endpoint onde o cliente pode obter o token
 
@@ -53,6 +54,17 @@ def create_access_token(data: dict):
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({'exp': expire})
+    encoded_jwt = encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+
+def create_refresh_token(data: dict):
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    to_encode.update({
+        'exp': expire,
+        'type': 'refresh'
+    })
     encoded_jwt = encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
@@ -88,3 +100,17 @@ async def get_current_user(db: AsyncSession = Depends(get_session), token: str =
         raise credentials_exception
 
     return user
+
+
+# Validar refresh token
+def verify_refresh_token(token: str):
+    try:
+        payload = decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+
+        if payload.get('type') != 'refresh':
+            return None
+
+        return payload
+
+    except (DecodeError, ExpiredSignatureError):
+        return None

@@ -72,9 +72,7 @@ async def create_movie(filme: MovieSchema, db: Session, current_user: CurrentUse
 
     db.add(novo_filme)
     await db.commit()
-    await db.refresh(
-        novo_filme, attribute_names=['generos']
-    )  # atualiza com as coisas que estão no banco (pega id e created_at, que não passados pelo usuário)
+    await db.refresh(novo_filme)  # atualiza com as coisas que estão no banco (pega id e created_at, que não passados pelo usuário)
 
     return novo_filme
 
@@ -85,10 +83,9 @@ async def read_movies(
     db: Session,
     filmes_filter: Annotated[FilterMovie, Query()],
 ):
-    
     # filtrando
     query = select(MovieModel)
-    
+
     if filmes_filter.titulo:
         query = query.filter(MovieModel.titulo.contains(filmes_filter.titulo))
 
@@ -96,17 +93,14 @@ async def read_movies(
         query = query.filter(MovieModel.ano == filmes_filter.ano)
 
     if filmes_filter.genero:
-        query = query.join(MovieModel.generos).where(
-            GeneroModel.id.in_(filmes_filter.genero)
-        )
+        query = query.join(MovieModel.generos).where(GeneroModel.id.in_(filmes_filter.genero))
 
     # explicando o filtro dos gêneros
     # filme já foi acessado, agora preciso dos dados relacionados -> ORM resolve sozinho com selectionload
     # quais filmes devo trazer (depende de filtros)? -> ORM não resolve sozinho porque ele ainda não tem o filme, precisa de JOIN explícito
 
     filmes = await db.scalars(
-        query
-        .options(
+        query.options(
             selectinload(MovieModel.generos), selectinload(MovieModel.usuario)
         )  # força carregar os gêneros e usuarios
         .limit(filmes_filter.limit)
@@ -126,10 +120,7 @@ async def read_one_movie(filme_id: int, db: Session):
     filme_db = await db.scalar(
         select(MovieModel)
         .where(MovieModel.id == filme_id)
-        .options(
-            selectinload(MovieModel.generos),
-            selectinload(MovieModel.usuario)
-        )
+        .options(selectinload(MovieModel.generos), selectinload(MovieModel.usuario))
     )
     if not filme_db:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Deu ruim! Não achei o filme.')
@@ -145,16 +136,17 @@ async def read_user_movies(user_id: int, db: Session):
         .where(MovieModel.created_by == user_id)
         .options(
             selectinload(MovieModel.generos),
+            selectinload(MovieModel.usuario)
         )
     )
 
-    lista = filmes_db.all(),
+    lista = filmes_db.all()
 
     if not lista:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail='Não encontrei filmes cadastrados por esse usuário.'
         )
-    
+
     return {'filmes': lista}
 
 
@@ -163,7 +155,7 @@ async def read_user_movies(user_id: int, db: Session):
 async def update_movie(filme_id: int, filme: MovieSchema, db: Session, current_user: CurrentUser):
     # verificar se filme existe
     filme_db = await db.scalar(
-        select(MovieModel).where(MovieModel.id == filme_id).options(selectinload(MovieModel.generos))
+        select(MovieModel).where(MovieModel.id == filme_id).options(selectinload(MovieModel.generos), selectinload(MovieModel.usuario))
     )
     if not filme_db:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Filme não encontrado!')
@@ -221,22 +213,24 @@ async def update_movie(filme_id: int, filme: MovieSchema, db: Session, current_u
 async def patch_movie(filme_id: int, filme: MovieUpdate, db: Session, current_user: CurrentUser):
     # verificar se filme existe
     filme_db = await db.scalar(
-        select(MovieModel).where(MovieModel.id == filme_id).options(selectinload(MovieModel.generos))
+        select(MovieModel).where(MovieModel.id == filme_id).options(selectinload(MovieModel.generos), selectinload(MovieModel.usuario))
     )
     if not filme_db:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Filme não encontrado!')
 
     # verificar se vai gerar filme duplicado
-    if filme.titulo is not None or filme.ano is not None:
-        filme_duplicado = await db.scalar(
-            select(MovieModel).where(
-                (func.lower(MovieModel.titulo) == (filme.titulo.lower()))
-                & (MovieModel.ano == filme.ano)
-                & (MovieModel.id != filme_id)
-            )
+    novo_titulo = filme.titulo if filme.titulo is not None else filme_db.titulo
+    novo_ano = filme.ano if filme.ano is not None else filme_db.ano
+
+    filme_duplicado = await db.scalar(
+        select(MovieModel).where(
+            (func.lower(MovieModel.titulo) == novo_titulo.lower())
+            & (MovieModel.ano == novo_ano)
+            & (MovieModel.id != filme_id)
         )
-        if filme_duplicado:
-            raise HTTPException(HTTPStatus.CONFLICT, detail='Esse filme já existe!')
+    )
+    if filme_duplicado:
+        raise HTTPException(HTTPStatus.CONFLICT, detail='Esse filme já existe!')
 
     # verificar capa duplicada
     if filme.capa is not None:
@@ -249,13 +243,10 @@ async def patch_movie(filme_id: int, filme: MovieUpdate, db: Session, current_us
     # pega os generos e verifica se existem
     if filme.generos is not None:
         if len(filme.generos) == 0:
-            raise HTTPException(
-                status_code=HTTPStatus.BAD_REQUEST,
-                detail='A lista de gêneros não pode ser vazia.'
-            )
-        
+            raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail='A lista de gêneros não pode ser vazia.')
+
         filme_db.generos = []
-    
+
         for genero_id in filme.generos:
             genero = await db.get(GeneroModel, genero_id)
             if not genero:

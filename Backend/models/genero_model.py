@@ -6,7 +6,6 @@ from sqlalchemy import DateTime, String, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from . import table_registry
-from .filme_model import MovieModel
 
 
 @table_registry.mapped_as_dataclass

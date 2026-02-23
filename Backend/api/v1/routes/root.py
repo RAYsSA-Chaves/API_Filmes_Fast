@@ -1,10 +1,9 @@
-# Retorno da "home" ou raiz (teste)
+# Retorno da 'home' ou raiz (teste)
 
 from http import HTTPStatus
-
 from fastapi import APIRouter
-
 from schemas.filme_schema import MessageSchema
+
 
 # Criando o roteador
 router = APIRouter()

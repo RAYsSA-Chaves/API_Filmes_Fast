@@ -1,19 +1,17 @@
-# Lógica da API para validar credenciais e gerar token (Login)
+# Lógica da API para validar credenciais e gerar token
 
 from http import HTTPStatus
 from typing import Annotated
-
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm  # formulário padrão da web de requisição de senha
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from core.deps import get_session
 from core.security import create_access_token, verify_password, create_refresh_token, verify_refresh_token
 from models.user_model import UserModel
 from schemas.token_schema import Token
 
-# Criando o roteador
+
 router = APIRouter(prefix='/token', tags=['Token'])
 
 Session = Annotated[AsyncSession, Depends(get_session)]
@@ -25,14 +23,17 @@ OAuth2Form = Annotated[OAuth2PasswordRequestForm, Depends()]
     '/',
     response_model=Token,
     summary='Autenticação de Usuário',
-    description="""
+    description='''
     Realiza login do usuário e gera token JWT.
     **Importante:** o campo `username` deve conter o `e-mail` do usuário!
-    """,
+    ''',
 )
 async def login_for_access_token(formData: OAuth2Form, db: Session):
     # verificar se usuário existe
-    user_db = await db.scalar(select(UserModel).where(UserModel.email == formData.username))
+    user_db = await db.scalar(
+        select(UserModel)
+        .where(UserModel.email == formData.username)
+    )
     if not user_db:
         raise HTTPException(status_code=HTTPStatus.UNAUTHORIZED, detail='Email e/ou senha incorreto(s)')
 
@@ -44,9 +45,7 @@ async def login_for_access_token(formData: OAuth2Form, db: Session):
     access_token = create_access_token({'sub': user_db.email, 'type': 'access'})
 
     # gerar token de refresh
-    refresh_token = create_refresh_token({
-        'sub': user_db.email
-    })
+    refresh_token = create_refresh_token({'sub': user_db.email})
 
     return {
         'access_token': access_token,
@@ -55,6 +54,7 @@ async def login_for_access_token(formData: OAuth2Form, db: Session):
     }
 
 
+# Refresh de token
 @router.post(
     '/refresh',
     response_model=Token,
@@ -76,7 +76,8 @@ async def refresh_access_token(refresh_token: str, db: Session):
         raise credentials_exception
 
     user = await db.scalar(
-        select(UserModel).where(UserModel.email == subject_email)
+        select(UserModel)
+        .where(UserModel.email == subject_email)
     )
 
     if not user:

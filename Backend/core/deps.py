@@ -1,9 +1,7 @@
 # Centralizando a criação e fechamento da sessão, para ser usada como dependência nas rotas/requisções
 
 from typing import Generator
-
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from core.database import Session
 
 
@@ -12,7 +10,7 @@ from core.database import Session
 async def get_session() -> Generator:
     # Cria uma sessão
     session: AsyncSession = Session()
-
+    
     try:
         # Retorna a sessão para a rota que depende dela
         # pausa a função

@@ -1,12 +1,11 @@
 # Lógica da API para requisições de filmes usando fake db
 
 # from http import HTTPStatus
-
 # from fastapi import APIRouter, HTTPException
-
 # from schemas.filme_schema import MessageSchema, MovieDB, MovieList, MoviePublic, MovieSchema
 
-# # Criando o roteador
+
+# Criando o roteador
 # router = APIRouter(prefix='/filmes', tags=['Filmes'])  # tags -> vai agrupar na documentação automática do FastAPI
 
 # fake_db = []

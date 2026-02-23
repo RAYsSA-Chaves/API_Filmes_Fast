@@ -1,7 +1,7 @@
 from fastapi import FastAPI
-
 from api.v1.routes import filmes, generos, root, token, usuarios
 from core.config import settings
+
 
 app = FastAPI(title='Minha API de filmes 🎬')
 

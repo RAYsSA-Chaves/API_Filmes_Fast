@@ -2,19 +2,18 @@
 
 from datetime import datetime
 from enum import Enum
-
 from sqlalchemy import DateTime, ForeignKey, String, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
 from . import table_registry
 from .genero_model import GeneroModel
 from .user_model import UserModel
 
+
 # Mapped -> mapeia o tipo mais próximo do banco (ex: str aqui = varchar lá)
-# mapped_column -> entende automaticamente o contexto da classe e faz algumas configurações de mapeamento para dizer a coluna deve ser do tipo anotado em Mapped[...]
+# mapped_column -> entende automaticamente o contexto da classe e faz algumas configurações de mapeamento para que a coluna seja do tipo anotado em Mapped[...]
 
 
-# opções de classificações indicativas
+# opções de classificações indicativas (enum)
 class IndicativeRating(str, Enum):
     # o texto menor é passado e salvo no banco e o maior é exibido para o usuário
     L = 'L'
@@ -41,9 +40,7 @@ class IndicativeRating(str, Enum):
 class MovieModel:
     __tablename__ = 'filmes'
 
-    id: Mapped[int] = mapped_column(
-        primary_key=True, init=False
-    )  # informa que o campo existe, mas não é algo que o usuário preenche manualmente na criação
+    id: Mapped[int] = mapped_column(primary_key=True, init=False) 
     titulo: Mapped[str] = mapped_column(String(255))
     duracao: Mapped[str] = mapped_column(String(10))
     ano: Mapped[int]
@@ -51,16 +48,17 @@ class MovieModel:
     avaliacao_interna: Mapped[float]
     classificacao: Mapped[IndicativeRating]
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, server_default=text('CURRENT_TIMESTAMP'), init=False
+        DateTime, 
+        server_default=text('CURRENT_TIMESTAMP'), 
+        init=False
     )  # o banco guarda data do INSERT automaticamente, não é o usuário nem o python que preenche isso
-    created_by: Mapped[int] = mapped_column(ForeignKey('usuarios.id'))
+    created_by: Mapped[int | None] = mapped_column(ForeignKey('usuarios.id', ondelete='SET NULL'))  # se apagar usuário, não precisa deletar filmes criados por ele
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         server_default=text('CURRENT_TIMESTAMP'),
         server_onupdate=text('CURRENT_TIMESTAMP'),
         init=False,
     )
-
     generos: Mapped[list['GeneroModel']] = relationship(
         secondary='genero_filme',  # nome da tabela intermediária
         back_populates='filmes',  # onde se conceta do outro lado (em GeneroModel)
@@ -70,4 +68,4 @@ class MovieModel:
         lazy='selectin',
         back_populates='filmes_cadastrados',
         init=False
-    )
+    )  # salva usuário completo criador do filme caso queira acessar dados dele ao retornar o filme

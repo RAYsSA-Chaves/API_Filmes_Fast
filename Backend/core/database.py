@@ -2,7 +2,6 @@
 
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-
 from core.config import settings
 
 # AsyncEngine = tipo
@@ -12,7 +11,7 @@ from core.config import settings
 # Engine
 engine: AsyncEngine = create_async_engine(settings.DB_URL)
 
-# Fábrica de sessões para criar várias sessions depois
+# Fábrica de sessões para criar várias sessions depois seguindo o modelo
 Session: AsyncEngine = sessionmaker(
     autocommit=False,  # não faz commit automaticamente, precisa de await session.commit() para salvar alterações
     autoflush=False,  # não envia alterações pendentes automaticamente

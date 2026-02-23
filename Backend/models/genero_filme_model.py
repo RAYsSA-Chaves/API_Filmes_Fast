@@ -3,7 +3,6 @@
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
-
 from . import table_registry
 
 
@@ -11,5 +10,5 @@ from . import table_registry
 class GeneroFilmeModel:
     __tablename__ = 'genero_filme'
 
-    id_filme: Mapped[int] = mapped_column(ForeignKey('filmes.id'), primary_key=True)
-    id_genero: Mapped[int] = mapped_column(ForeignKey('generos.id'), primary_key=True)
+    id_filme: Mapped[int] = mapped_column(ForeignKey('filmes.id', ondelete='CASCADE'), primary_key=True)
+    id_genero: Mapped[int] = mapped_column(ForeignKey('generos.id', ondelete='CASCADE'), primary_key=True)

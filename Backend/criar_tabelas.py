@@ -1,7 +1,6 @@
 # Criar todas as tabelas do banco de dados usando os modelos definidos
 
 import asyncio
-
 from core.database import engine
 from models import table_registry
 
@@ -25,4 +24,4 @@ async def create_tables() -> None:
 
 asyncio.run(create_tables())  # funções async não rodam sozinhas, precisam de asyncio.run para executar
 
-# Executar o script:npython criar_tabelas.py
+# Executar o script: python criar_tabelas.py

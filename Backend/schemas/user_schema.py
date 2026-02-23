@@ -1,8 +1,8 @@
 # Documentação dos modelos dos dados dos usuários para validação
 
 from typing import Annotated
-
 from pydantic import BaseModel, EmailStr, Field
+
 
 # ---- Tipos personalizados ----
 
@@ -10,7 +10,6 @@ SenhaStr = Annotated[str, Field(min_length=6)]
 
 
 # ---- Schemas ----
-
 
 # para cadastro
 class UserCreate(BaseModel):
@@ -32,7 +31,7 @@ class UserPublic(BaseModel):
     model_config = {'from_attributes': True}
 
 
-# pegar email do usuário
+# pegar somente email do usuário
 class UserEmail(BaseModel):
     email: EmailStr
 
